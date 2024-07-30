@@ -226,9 +226,7 @@ export class RoarBot {
           `https://api.meower.org/${
             !options?.chat || options?.chat === "home"
               ? "home"
-              : options?.chat === "livechat"
-                ? "livechat"
-                : `/chats/${options?.chat}`
+              : `posts/${options?.chat}`
           }`,
           {
             method: "POST",
