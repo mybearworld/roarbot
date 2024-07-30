@@ -309,13 +309,13 @@ export type PostOptions = {
 export type PatternType = "string" | "number" | "full" | string[];
 
 /**
- * A list of arguments types. This is a list of simple {@link PatternType}s,
- * followed by either:
- * - `"full"`: Puts the rest of the argument together into one
- * - `{ type: Argument, optional: true }`: Adds optional arguments
- * Note that this order isn't enforced by the type due to TypeScript
- * limitations, and therefore has to be enforced by functions like
- * {@link parseArgs}.
+ * A list of arguments types. This is a list of objects formatted like this:
+ * - type: A {@link PatternType}.
+ * - optional: Whether it's optional or not. After an optional argument can only
+ * be other optional arguments.
+ * - name: The name of the argument.
+ * If both the name and optional aren't given, the type can be standalone
+ * without a wrapper object.
  *
  * @example Basic
  * ```js
