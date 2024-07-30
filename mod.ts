@@ -15,6 +15,48 @@ const AUTH_PACKET_SCHEMA = z.object({
   val: z.object({ token: z.string() }),
 });
 
+export type Attachment = z.infer<typeof ATTACHMENT_SCHEMA>;
+const ATTACHMENT_SCHEMA = z.object({
+  filename: z.string(),
+  height: z.number(),
+  id: z.string(),
+  mime: z.string(),
+  size: z.number(),
+  width: z.number(),
+});
+
+export type Post = z.infer<typeof BASE_POST_SCHEMA> & {
+  reply_to: (Post | null)[];
+};
+const BASE_POST_SCHEMA = z.object({
+  attachments: ATTACHMENT_SCHEMA.array(),
+  edited_at: z.number().optional(),
+  isDeleted: z.literal(false),
+  p: z.string(),
+  post_id: z.string(),
+  post_origin: z.string(),
+  t: z.object({
+    e: z.number(),
+  }),
+  type: z.number(),
+  u: z.string(),
+  reactions: z
+    .object({
+      count: z.number(),
+      emoji: z.string(),
+      user_reacted: z.boolean(),
+    })
+    .array(),
+});
+const POST_SCHEMA: z.ZodType<Post> = BASE_POST_SCHEMA.extend({
+  reply_to: z.lazy(() => POST_SCHEMA.nullable().array()),
+});
+
+const API_POST_SCHEMA = z
+  .object({ error: z.literal(false) })
+  .and(POST_SCHEMA)
+  .or(z.object({ error: z.literal(true), type: z.string() }));
+
 /**
  * A bot connecting to Meower.
  */
@@ -85,6 +127,47 @@ export class RoarBot {
   }
 
   /**
+   * Create a new post.
+   * @param content The content of the post.
+   * @param options More parameters of the post. See {@link PostOptions} for
+   * details.
+   * @throws If the bot is not logged in.
+   * @throws If the API returns an error.
+   * @returns The resulting post. This might be returned later than the post
+   * will be appearing via the socket.
+   */
+  async post(content: string, options?: PostOptions): Promise<Post> {
+    if (!this._token) {
+      throw new Error("The bot is not logged in.");
+    }
+    const response = API_POST_SCHEMA.parse(
+      await (
+        await fetch(
+          `https://api.meower.org/${
+            !options?.chat || options?.chat === "home"
+              ? "home"
+              : options?.chat === "livechat"
+              ? "livechat"
+              : `/chats/${options?.chat}`
+          }`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Token: this._token,
+            },
+            body: JSON.stringify({ content, reply_to: options?.replies }),
+          }
+        )
+      ).json()
+    );
+    if (response.error) {
+      throw new Error(`Couldn't post: ${response.type}`);
+    }
+    return response;
+  }
+
+  /**
    * The token of the account the bot is logged into. If the bot isn't logged
    * in, this is `undefined`.
    */
@@ -98,4 +181,19 @@ export class RoarBot {
  */
 export type Events = {
   login: (token: string) => void;
+};
+
+/**
+ * Options that can be passed into {@link RoarBot.prototype.post}.
+ */
+export type PostOptions = {
+  /** Post IDs that this post is replying to. */
+  replies?: string[];
+  /**
+   * The chat to post to. If this is not specified, the post will be posted to
+   * home. The available special chats are:
+   * - `home`
+   * - `livechat`
+   */
+  chat?: string;
 };
