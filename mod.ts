@@ -15,8 +15,15 @@ const AUTH_PACKET_SCHEMA = z.object({
   val: z.object({ token: z.string() }),
 });
 
-export type Attachment = z.infer<typeof ATTACHMENT_SCHEMA>;
-const ATTACHMENT_SCHEMA = z.object({
+export type Attachment = {
+  filename: string;
+  height: number;
+  id: string;
+  mime: string;
+  size: number;
+  width: number;
+};
+const ATTACHMENT_SCHEMA: z.ZodType<Attachment> = z.object({
   filename: z.string(),
   height: z.number(),
   id: z.string(),
@@ -25,7 +32,17 @@ const ATTACHMENT_SCHEMA = z.object({
   width: z.number(),
 });
 
-export type Post = z.infer<typeof BASE_POST_SCHEMA> & {
+export type Post = {
+  attachments: Attachment[];
+  edited_at?: number;
+  isDeleted: boolean;
+  p: string;
+  post_id: string;
+  post_origin: string;
+  t: { e: number };
+  type: number;
+  u: string;
+  reactions: { count: number; emoji: string; user_reacted: boolean }[];
   reply_to: (Post | null)[];
 };
 const BASE_POST_SCHEMA = z.object({
@@ -35,9 +52,7 @@ const BASE_POST_SCHEMA = z.object({
   p: z.string(),
   post_id: z.string(),
   post_origin: z.string(),
-  t: z.object({
-    e: z.number(),
-  }),
+  t: z.object({ e: z.number() }),
   type: z.number(),
   u: z.string(),
   reactions: z
@@ -171,7 +186,7 @@ export class RoarBot {
    * The token of the account the bot is logged into. If the bot isn't logged
    * in, this is `undefined`.
    */
-  get token() {
+  get token(): string | undefined {
     return this._token;
   }
 }
