@@ -273,7 +273,12 @@ export class RoarBot {
       if (parsed.error) {
         reply(parsed.message);
       } else {
-        options.fn(reply, parsed.parsed, post);
+        try {
+          options.fn(reply, parsed.parsed, post);
+        } catch (e) {
+          reply("💥 Something exploded. Check the console for more info!");
+          console.error(e);
+        }
       }
     });
   }
