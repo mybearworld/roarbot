@@ -94,28 +94,33 @@ export class RoarBot {
   private _token?: string;
 
   constructor() {
-    this.command("help", "Shows this message.", [], (reply) => {
-      const commands = this._commands
-        .map((command) => {
-          const pattern = command.pattern
-            .map((patternType) =>
-              typeof patternType === "object" && !Array.isArray(patternType)
-                ? "(" +
-                  (("name" in patternType ? `${patternType.name}: ` : "") +
-                    stringifyPatternType(patternType.type) +
-                    (patternType.optional ? " (optional)" : "")) +
-                  ")"
-                : `(${stringifyPatternType(patternType)})`
-            )
-            .join(" ");
-          return (
-            `@${this.username} ${command.name}` +
-            (command.description ? ` - ${command.description}` : "") +
-            (pattern ? `  - ${pattern}` : "")
-          );
-        })
-        .join("\n");
-      reply(`**Commands:**\n${commands}`);
+    this.command({
+      name: "help",
+      description: "Shows this message.",
+      pattern: [],
+      fn: (reply) => {
+        const commands = this._commands
+          .map((command) => {
+            const pattern = command.pattern
+              .map((patternType) =>
+                typeof patternType === "object" && !Array.isArray(patternType)
+                  ? "(" +
+                    (("name" in patternType ? `${patternType.name}: ` : "") +
+                      stringifyPatternType(patternType.type) +
+                      (patternType.optional ? " (optional)" : "")) +
+                    ")"
+                  : `(${stringifyPatternType(patternType)})`
+              )
+              .join(" ");
+            return (
+              `@${this.username} ${command.name}` +
+              (command.description ? ` - ${command.description}` : "") +
+              (pattern ? `  - ${pattern}` : "")
+            );
+          })
+          .join("\n");
+        reply(`**Commands:**\n${commands}`);
+      },
     });
   }
 
@@ -245,27 +250,22 @@ export class RoarBot {
    * @param callback The callback that should be executed when the command
    * is run.
    */
-  command<const TPattern extends Pattern>(
-    name: string,
-    description: string | null,
-    pattern: TPattern,
-    callback: (
-      reply: (content: string) => Promise<Post>,
-      args: ResolvePattern<TPattern>,
-      post: Post
-    ) => void
-  ) {
-    this._commands.push({ name, description, pattern });
+  command<const TPattern extends Pattern>(options: CommandOptions<TPattern>) {
+    this._commands.push({
+      name: options.name,
+      description: options.description ?? null,
+      pattern: options.pattern,
+    });
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
-      if (split[0] !== `@${this.username}` || split[1] !== name) {
+      if (split[0] !== `@${this.username}` || split[1] !== options.name) {
         return;
       }
-      const parsed = parseArgs(pattern, split.slice(2));
+      const parsed = parseArgs(options.pattern, split.slice(2));
       if (parsed.error) {
         reply(parsed.message);
       } else {
-        callback(reply, parsed.parsed, post);
+        options.fn(reply, parsed.parsed, post);
       }
     });
   }
@@ -293,6 +293,24 @@ export class RoarBot {
 export type Events = {
   login: (token: string) => void;
   post: (reply: (content: string) => Promise<Post>, post: Post) => void;
+};
+
+/**
+ * Options that can be passed into {@link RoarBot.prototype.command}.
+ */
+export type CommandOptions<TPattern extends Pattern> = {
+  /** The name of the command. */
+  name: string;
+  /** The description of the command. This is shown in the help message. */
+  description?: string;
+  /** The argument pattern of the command. */
+  pattern: TPattern;
+  /** The callback to be called when the command gets executed. */
+  fn: (
+    reply: (content: string) => Promise<Post>,
+    args: ResolvePattern<TPattern>,
+    post: Post
+  ) => void;
 };
 
 /**
