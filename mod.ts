@@ -101,8 +101,7 @@ export class RoarBot {
    */
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
-    this.command({
-      name: "help",
+    this.command("help", {
       description: "Shows this message.",
       pattern: [],
       fn: (reply) => {
@@ -251,23 +250,21 @@ export class RoarBot {
   /**
    * Register a new command.
    * @param name The name of the command.
-   * @param description The description of the command. Shown in the help
-   * message.
-   * @param pattern The argument pattern of the command. See {@link Pattern} for
-   * details.
-   * @param callback The callback that should be executed when the command
-   * is run.
+   * @param options Some options. See {@link CommandOptions} for details.
    */
-  command<const TPattern extends Pattern>(options: CommandOptions<TPattern>) {
+  command<const TPattern extends Pattern>(
+    name: string,
+    options: CommandOptions<TPattern>
+  ) {
     this._commands.push({
-      name: options.name,
+      name: name,
       description: options.description ?? null,
       pattern: options.pattern,
       admin: options.admin ?? false,
     });
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
-      if (split[0] !== `@${this.username}` || split[1] !== options.name) {
+      if (split[0] !== `@${this.username}` || split[1] !== name) {
         return;
       }
       if (options.admin && !this._admins.includes(post.u)) {
@@ -318,8 +315,6 @@ export type RoarBotOptions = {
  * Options that can be passed into {@link RoarBot.prototype.command}.
  */
 export type CommandOptions<TPattern extends Pattern> = {
-  /** The name of the command. */
-  name: string;
   /** The description of the command. This is shown in the help message. */
   description?: string;
   /** The argument pattern of the command. */
