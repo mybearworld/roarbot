@@ -22,6 +22,7 @@ export class RoarBot {
   private _events: { [K in keyof Events]: Events[K][] } = {
     login: [],
   };
+  private _token?: string;
 
   /**
    * Log into an account and start the bot.
@@ -61,7 +62,7 @@ export class RoarBot {
         return;
       }
       const token = parsed.data.val.token;
-      console.log(`Your token is ${token}`);
+      this._token = token;
       this._events.login.forEach((callback) => callback());
     });
   }
@@ -77,6 +78,14 @@ export class RoarBot {
    */
   on<TEvent extends keyof Events>(event: TEvent, callback: Events[TEvent]) {
     this._events[event].push(callback);
+  }
+
+  /**
+   * The token of the account the bot is logged into. If the bot isn't logged
+   * in, this is `undefined`.
+   */
+  get token() {
+    return this._token;
   }
 }
 
