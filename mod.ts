@@ -72,12 +72,18 @@ const API_POST_SCHEMA = z
   .and(POST_SCHEMA)
   .or(z.object({ error: z.literal(true), type: z.string() }));
 
+const POST_PACKET_SCHEMA = z.object({
+  cmd: z.literal("post"),
+  val: POST_SCHEMA,
+});
+
 /**
  * A bot connecting to Meower.
  */
 export class RoarBot {
   private _events: { [K in keyof Events]: Events[K][] } = {
     login: [],
+    post: [],
   };
   private _token?: string;
 
@@ -125,6 +131,13 @@ export class RoarBot {
       const token = parsed.data.val.token;
       this._token = token;
       this._events.login.forEach((callback) => callback(token));
+    });
+    ws.addEventListener("message", ({ data }) => {
+      const parsed = POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      if (!parsed.success) {
+        return;
+      }
+      this._events.post.forEach((callback) => callback(parsed.data.val));
     });
   }
 
@@ -196,6 +209,7 @@ export class RoarBot {
  */
 export type Events = {
   login: (token: string) => void;
+  post: (post: Post) => void;
 };
 
 /**
