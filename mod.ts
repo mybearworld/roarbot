@@ -89,11 +89,18 @@ export class RoarBot {
     name: string;
     description: string | null;
     pattern: Pattern;
+    admin: boolean;
   }[] = [];
   private _username?: string;
   private _token?: string;
+  private _admins: string[];
 
-  constructor() {
+  /**
+   * Create a bot.
+   * @param options Some options. See {@link RoarBotOptions} for more details.
+   */
+  constructor(options?: RoarBotOptions) {
+    this._admins = options?.admins ?? [];
     this.command({
       name: "help",
       description: "Shows this message.",
@@ -113,6 +120,7 @@ export class RoarBot {
               )
               .join(" ");
             return (
+              (command.admin ? "🔒 " : "") +
               `@${this.username} ${command.name}` +
               (command.description ? ` - ${command.description}` : "") +
               (pattern ? `  - ${pattern}` : "")
@@ -255,10 +263,15 @@ export class RoarBot {
       name: options.name,
       description: options.description ?? null,
       pattern: options.pattern,
+      admin: options.admin ?? false,
     });
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
       if (split[0] !== `@${this.username}` || split[1] !== options.name) {
+        return;
+      }
+      if (options.admin && !this._admins.includes(post.u)) {
+        reply("You can't use this command as it is limited to administrators.");
         return;
       }
       const parsed = parseArgs(options.pattern, split.slice(2));
@@ -295,6 +308,12 @@ export type Events = {
   post: (reply: (content: string) => Promise<Post>, post: Post) => void;
 };
 
+/** Options that can be passed into {@link RoarBot}. */
+export type RoarBotOptions = {
+  /** The administrators of this bot. They can use admin commands. */
+  admins?: string[];
+};
+
 /**
  * Options that can be passed into {@link RoarBot.prototype.command}.
  */
@@ -305,6 +324,8 @@ export type CommandOptions<TPattern extends Pattern> = {
   description?: string;
   /** The argument pattern of the command. */
   pattern: TPattern;
+  /** Whether this command is only usable by administrators. */
+  admin?: boolean;
   /** The callback to be called when the command gets executed. */
   fn: (
     reply: (content: string) => Promise<Post>,
