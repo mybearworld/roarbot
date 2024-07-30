@@ -109,13 +109,13 @@ export class RoarBot {
           .map((command) => {
             const pattern = command.pattern
               .map((patternType) =>
-                typeof patternType === "object" && !Array.isArray(patternType)
-                  ? "(" +
-                    (("name" in patternType ? `${patternType.name}: ` : "") +
-                      stringifyPatternType(patternType.type) +
-                      (patternType.optional ? " (optional)" : "")) +
-                    ")"
-                  : `(${stringifyPatternType(patternType)})`
+                typeof patternType === "object" && !Array.isArray(patternType) ?
+                  "(" +
+                  (("name" in patternType ? `${patternType.name}: ` : "") +
+                    stringifyPatternType(patternType.type) +
+                    (patternType.optional ? " (optional)" : "")) +
+                  ")"
+                : `(${stringifyPatternType(patternType)})`,
               )
               .join(" ");
             return (
@@ -157,15 +157,15 @@ export class RoarBot {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
         })
-      ).json()
+      ).json(),
     );
     if (response.error) {
       throw new Error(
-        `Couldn't log in: ${response.type}. Ensure that you have the correct password!`
+        `Couldn't log in: ${response.type}. Ensure that you have the correct password!`,
       );
     }
     const ws = new WebSocket(
-      `https://server.meower.org?v=1&token=${response.token}`
+      `https://server.meower.org?v=1&token=${response.token}`,
     );
     ws.addEventListener("message", ({ data }) => {
       const parsed = AUTH_PACKET_SCHEMA.safeParse(JSON.parse(data));
@@ -188,7 +188,7 @@ export class RoarBot {
             replies: [parsed.data.val.post_id],
             chat: parsed.data.val.post_origin,
           });
-        }, parsed.data.val)
+        }, parsed.data.val),
       );
     });
   }
@@ -224,9 +224,9 @@ export class RoarBot {
       await (
         await fetch(
           `https://api.meower.org/${
-            !options?.chat || options?.chat === "home"
-              ? "home"
-              : `posts/${options?.chat}`
+            !options?.chat || options?.chat === "home" ?
+              "home"
+            : `posts/${options?.chat}`
           }`,
           {
             method: "POST",
@@ -235,9 +235,9 @@ export class RoarBot {
               Token: this._token,
             },
             body: JSON.stringify({ content, reply_to: options?.replies }),
-          }
+          },
         )
-      ).json()
+      ).json(),
     );
     if (response.error) {
       throw new Error(`Couldn't post: ${response.type}`);
@@ -252,7 +252,7 @@ export class RoarBot {
    */
   command<const TPattern extends Pattern>(
     name: string,
-    options: CommandOptions<TPattern>
+    options: CommandOptions<TPattern>,
   ) {
     this._commands.push({
       name: name,
@@ -331,7 +331,7 @@ export type CommandOptions<TPattern extends Pattern> = {
   fn: (
     reply: (content: string) => Promise<Post>,
     args: ResolvePattern<TPattern>,
-    post: Post
+    post: Post,
   ) => void;
 };
 
@@ -400,30 +400,25 @@ export type Pattern = (
  * Converts the passed in `TArguments` to its corresponding TypeScript type.
  */
 export type ResolvePattern<TPattern extends Pattern> = {
-  [K in keyof TPattern]: K extends `${number}`
-    ? TPattern[K] extends PatternType
-      ? ResolvePatternType<TPattern[K]>
-      : TPattern[K] extends { type: PatternType }
-        ? TPattern[K] extends { optional: true }
-          ? ResolvePatternType<TPattern[K]["type"]> | undefined
-          : ResolvePatternType<TPattern[K]["type"]>
-        : never
-    : TPattern[K];
+  [K in keyof TPattern]: K extends `${number}` ?
+    TPattern[K] extends PatternType ? ResolvePatternType<TPattern[K]>
+    : TPattern[K] extends { type: PatternType } ?
+      TPattern[K] extends { optional: true } ?
+        ResolvePatternType<TPattern[K]["type"]> | undefined
+      : ResolvePatternType<TPattern[K]["type"]>
+    : never
+  : TPattern[K];
 };
 type ResolvePatternType<TArgument extends PatternType> =
-  TArgument extends "string"
-    ? string
-    : TArgument extends "number"
-      ? number
-      : TArgument extends "full"
-        ? string
-        : TArgument extends string[]
-          ? TArgument[number]
-          : never;
+  TArgument extends "string" ? string
+  : TArgument extends "number" ? number
+  : TArgument extends "full" ? string
+  : TArgument extends string[] ? TArgument[number]
+  : never;
 
 const parseArgs = <const TPattern extends Pattern>(
   pattern: TPattern,
-  args: string[]
+  args: string[],
 ):
   | { error: true; message: string }
   | { error: false; parsed: ResolvePattern<TPattern> } => {
@@ -496,9 +491,11 @@ const parseArgs = <const TPattern extends Pattern>(
 };
 
 const stringifyPatternType = (patternType: PatternType) => {
-  return typeof patternType === "string"
-    ? patternType === "full"
-      ? "full string"
+  return (
+    typeof patternType === "string" ?
+      patternType === "full" ?
+        "full string"
       : patternType
-    : patternType.map((option) => JSON.stringify(option)).join(" | ");
+    : patternType.map((option) => JSON.stringify(option)).join(" | ")
+  );
 };
