@@ -4,7 +4,7 @@
  * @module
  */
 
-import { z } from "npm:zod";
+import { z } from "npm:zod@3";
 
 const LOGIN_SCHEMA = z.discriminatedUnion("error", [
   z.object({ error: z.literal(false), token: z.string() }),
