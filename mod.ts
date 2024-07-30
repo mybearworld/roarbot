@@ -261,6 +261,9 @@ export class RoarBot {
       admin: options.admin ?? false,
     });
     this.on("post", (reply, post) => {
+      if (post.u === this.username) {
+        return;
+      }
       const split = post.p.split(" ");
       if (split[0] !== `@${this.username}` || split[1] !== name) {
         return;
