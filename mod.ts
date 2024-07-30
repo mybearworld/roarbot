@@ -424,6 +424,7 @@ const parseArgs = <const TPattern extends Pattern>(
   | { error: false; parsed: ResolvePattern<TPattern> } => {
   const parsed = [];
   let hadOptionals = false;
+  let hadFull = false;
   for (const [i, slice] of pattern.entries()) {
     const isObject = typeof slice === "object" && "type" in slice;
     const type = isObject ? slice.type : slice;
@@ -480,12 +481,16 @@ const parseArgs = <const TPattern extends Pattern>(
               "In this command's pattern, there is an argument following a `full` argument.\nThis is an issue with the bot, not your command.",
           };
         }
+        hadFull = true;
         parsed.push(args.slice(i).join(" "));
         break;
       }
       default:
         (type) satisfies never;
     }
+  }
+  if (!hadFull && args.length !== parsed.length) {
+    return { error: true, message: "You have too many arguments." };
   }
   return { error: false, parsed: parsed as ResolvePattern<TPattern> };
 };
