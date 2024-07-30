@@ -94,7 +94,7 @@ export class RoarBot {
   private _token?: string;
 
   constructor() {
-    this.command("help", "Shows this message.", [], () => {
+    this.command("help", "Shows this message.", [], (reply) => {
       const commands = this._commands
         .map((command) => {
           const pattern = command.pattern
@@ -115,7 +115,7 @@ export class RoarBot {
           );
         })
         .join("\n");
-      this.post(`**Commands:**\n${commands}`);
+      reply(`**Commands:**\n${commands}`);
     });
   }
 
@@ -170,7 +170,14 @@ export class RoarBot {
       if (!parsed.success) {
         return;
       }
-      this._events.post.forEach((callback) => callback(parsed.data.val));
+      this._events.post.forEach((callback) =>
+        callback((content) => {
+          return this.post(content, {
+            replies: [parsed.data.val.post_id],
+            chat: parsed.data.val.post_origin,
+          });
+        }, parsed.data.val)
+      );
     });
   }
 
@@ -242,19 +249,23 @@ export class RoarBot {
     name: string,
     description: string | null,
     pattern: TPattern,
-    callback: (args: ResolvePattern<TPattern>, post: Post) => void
+    callback: (
+      reply: (content: string) => Promise<Post>,
+      args: ResolvePattern<TPattern>,
+      post: Post
+    ) => void
   ) {
     this._commands.push({ name, description, pattern });
-    this.on("post", (post) => {
+    this.on("post", (reply, post) => {
       const split = post.p.split(" ");
       if (split[0] !== `@${this.username}` || split[1] !== name) {
         return;
       }
       const parsed = parseArgs(pattern, split.slice(2));
       if (parsed.error) {
-        this.post(parsed.message);
+        reply(parsed.message);
       } else {
-        callback(parsed.parsed, post);
+        callback(reply, parsed.parsed, post);
       }
     });
   }
@@ -281,7 +292,7 @@ export class RoarBot {
  */
 export type Events = {
   login: (token: string) => void;
-  post: (post: Post) => void;
+  post: (reply: (content: string) => Promise<Post>, post: Post) => void;
 };
 
 /**
