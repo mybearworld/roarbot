@@ -1,0 +1,5 @@
+{
+  "name": "@mbw/roarbot",
+  "version": "0.0.1",
+  "exports": "./mod.ts"
+}
