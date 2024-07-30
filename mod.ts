@@ -67,7 +67,7 @@ export class RoarBot {
       }
       const token = parsed.data.val.token;
       this._token = token;
-      this._events.login.forEach((callback) => callback());
+      this._events.login.forEach((callback) => callback(token));
     });
   }
 
@@ -97,5 +97,5 @@ export class RoarBot {
  * A mapping of events to their respective callbacks.
  */
 export type Events = {
-  login: () => void;
+  login: (token: string) => void;
 };
