@@ -85,8 +85,39 @@ export class RoarBot {
     login: [],
     post: [],
   };
+  private _commands: {
+    name: string;
+    description: string | null;
+    pattern: Pattern;
+  }[] = [];
   private _username?: string;
   private _token?: string;
+
+  constructor() {
+    this.command("help", "Shows this message.", [], () => {
+      const commands = this._commands
+        .map((command) => {
+          const pattern = command.pattern
+            .map((patternType) =>
+              typeof patternType === "object" && !Array.isArray(patternType)
+                ? "(" +
+                  (("name" in patternType ? `${patternType.name}: ` : "") +
+                    stringifyPatternType(patternType.type) +
+                    (patternType.optional ? " (optional)" : "")) +
+                  ")"
+                : `(${stringifyPatternType(patternType)})`
+            )
+            .join(" ");
+          return (
+            `@${this.username} ${command.name}` +
+            (command.description ? ` - ${command.description}` : "") +
+            (pattern ? `  - ${pattern}` : "")
+          );
+        })
+        .join("\n");
+      this.post(`**Commands:**\n${commands}`);
+    });
+  }
 
   /**
    * Log into an account and start the bot.
@@ -200,6 +231,8 @@ export class RoarBot {
   /**
    * Register a new command.
    * @param name The name of the command.
+   * @param description The description of the command. Shown in the help
+   * message.
    * @param pattern The argument pattern of the command. See {@link Pattern} for
    * details.
    * @param callback The callback that should be executed when the command
@@ -207,9 +240,11 @@ export class RoarBot {
    */
   command<const TPattern extends Pattern>(
     name: string,
+    description: string | null,
     pattern: TPattern,
     callback: (args: ResolvePattern<TPattern>, post: Post) => void
   ) {
+    this._commands.push({ name, description, pattern });
     this.on("post", (post) => {
       const split = post.p.split(" ");
       if (split[0] !== `@${this.username}` || split[1] !== name) {
@@ -268,9 +303,10 @@ export type PostOptions = {
  * Possible types of patterns to a command.
  * - `"string"`: Any string
  * - `"number"`: Any floating point number
+ * - `"full"`: A string that matches until the end of the command.
  * - `string[]`: One of the specified strings
  */
-export type PatternType = "string" | "number" | string[];
+export type PatternType = "string" | "number" | "full" | string[];
 
 /**
  * A list of arguments types. This is a list of simple {@link PatternType}s,
@@ -307,8 +343,6 @@ export type PatternType = "string" | "number" | string[];
 export type Pattern = (
   | PatternType
   | { type: PatternType; name?: string; optional?: boolean }
-  | "full"
-  | { type: "full"; name?: string; optional?: false }
 )[];
 
 /**
@@ -316,7 +350,7 @@ export type Pattern = (
  */
 export type ResolvePattern<TPattern extends Pattern> = {
   [K in keyof TPattern]: K extends `${number}`
-    ? TPattern[K] extends PatternType | "full"
+    ? TPattern[K] extends PatternType
       ? ResolvePatternType<TPattern[K]>
       : TPattern[K] extends { type: PatternType }
         ? TPattern[K] extends { optional: true }
@@ -325,7 +359,7 @@ export type ResolvePattern<TPattern extends Pattern> = {
         : never
     : TPattern[K];
 };
-type ResolvePatternType<TArgument extends PatternType | "full"> =
+type ResolvePatternType<TArgument extends PatternType> =
   TArgument extends "string"
     ? string
     : TArgument extends "number"
@@ -408,4 +442,12 @@ const parseArgs = <const TPattern extends Pattern>(
     }
   }
   return { error: false, parsed: parsed as ResolvePattern<TPattern> };
+};
+
+const stringifyPatternType = (patternType: PatternType) => {
+  return typeof patternType === "string"
+    ? patternType === "full"
+      ? "full string"
+      : patternType
+    : patternType.map((option) => JSON.stringify(option)).join(" | ");
 };
