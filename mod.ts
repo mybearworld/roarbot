@@ -19,6 +19,10 @@ const AUTH_PACKET_SCHEMA = z.object({
  * A bot connecting to Meower.
  */
 export class RoarBot {
+  private _events: { [K in keyof Events]: Events[K][] } = {
+    login: [],
+  };
+
   /**
    * Log into an account and start the bot.
    * @param username The username of the account the bot should log into.
@@ -58,6 +62,27 @@ export class RoarBot {
       }
       const token = parsed.data.val.token;
       console.log(`Your token is ${token}`);
+      this._events.login.forEach((callback) => callback());
     });
   }
+
+  /**
+   * Listen to an event that occurs.
+   * @param event The event to listen for.
+   * @param callback The callback to execute when the event fires.
+   * @example
+   * ```js
+   * bot.on("login", () => console.log("Hooray!"));
+   * ```
+   */
+  on<TEvent extends keyof Events>(event: TEvent, callback: Events[TEvent]) {
+    this._events[event].push(callback);
+  }
 }
+
+/**
+ * A mapping of events to their respective callbacks.
+ */
+export type Events = {
+  login: () => void;
+};
