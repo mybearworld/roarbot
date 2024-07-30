@@ -85,6 +85,7 @@ export class RoarBot {
     login: [],
     post: [],
   };
+  private _username?: string;
   private _token?: string;
 
   /**
@@ -129,6 +130,7 @@ export class RoarBot {
         return;
       }
       const token = parsed.data.val.token;
+      this._username = username;
       this._token = token;
       this._events.login.forEach((callback) => callback(token));
     });
@@ -175,8 +177,8 @@ export class RoarBot {
             !options?.chat || options?.chat === "home"
               ? "home"
               : options?.chat === "livechat"
-              ? "livechat"
-              : `/chats/${options?.chat}`
+                ? "livechat"
+                : `/chats/${options?.chat}`
           }`,
           {
             method: "POST",
@@ -193,6 +195,41 @@ export class RoarBot {
       throw new Error(`Couldn't post: ${response.type}`);
     }
     return response;
+  }
+
+  /**
+   * Register a new command.
+   * @param name The name of the command.
+   * @param pattern The argument pattern of the command. See {@link Pattern} for
+   * details.
+   * @param callback The callback that should be executed when the command
+   * is run.
+   */
+  command<const TPattern extends Pattern>(
+    name: string,
+    pattern: TPattern,
+    callback: (args: ResolvePattern<TPattern>, post: Post) => void
+  ) {
+    this.on("post", (post) => {
+      const split = post.p.split(" ");
+      if (split[0] !== `@${this.username}` || split[1] !== name) {
+        return;
+      }
+      const parsed = parseArgs(pattern, split.slice(2));
+      if (parsed.error) {
+        this.post(parsed.message);
+      } else {
+        callback(parsed.parsed, post);
+      }
+    });
+  }
+
+  /**
+   * The username of the account the bot is logged into. If the bot isn't logged
+   * in, this is `undefined`.
+   */
+  get username(): string | undefined {
+    return this._username;
   }
 
   /**
@@ -225,4 +262,150 @@ export type PostOptions = {
    * - `livechat`
    */
   chat?: string;
+};
+
+/**
+ * Possible types of patterns to a command.
+ * - `"string"`: Any string
+ * - `"number"`: Any floating point number
+ * - `string[]`: One of the specified strings
+ */
+export type PatternType = "string" | "number" | string[];
+
+/**
+ * A list of arguments types. This is a list of simple {@link PatternType}s,
+ * followed by either:
+ * - `"full"`: Puts the rest of the argument together into one
+ * - `{ type: Argument, optional: true }`: Adds optional arguments
+ * Note that this order isn't enforced by the type due to TypeScript
+ * limitations, and therefore has to be enforced by functions like
+ * {@link parseArgs}.
+ *
+ * @example Basic
+ * ```js
+ * ["number", "string"]
+ * // @Bot cmd 2 4 → [2, "4"]
+ * ```
+ * @example `full`
+ * ```js
+ * [
+ *   { type: "number", name: "amount" },
+ *   { type: "full", name: "string" }
+ * ]
+ * // @Bot cmd 7 Hello, world! → [7, "Hello, world!"]
+ * ```
+ * @example Optionals
+ * ```js
+ * [
+ *   { type: "string", name: "person to greet" },
+ *   { type: "string", optional: true, name: "greeting to use" }
+ * ]
+ * // @Bot cmd Josh → ["Josh"]
+ * // @Bot cmd Josh G'day → ["Josh", "G'day"]
+ * ```
+ */
+export type Pattern = (
+  | PatternType
+  | { type: PatternType; name?: string; optional?: boolean }
+  | "full"
+  | { type: "full"; name?: string; optional?: false }
+)[];
+
+/**
+ * Converts the passed in `TArguments` to its corresponding TypeScript type.
+ */
+export type ResolvePattern<TPattern extends Pattern> = {
+  [K in keyof TPattern]: K extends `${number}`
+    ? TPattern[K] extends PatternType | "full"
+      ? ResolvePatternType<TPattern[K]>
+      : TPattern[K] extends { type: PatternType }
+        ? TPattern[K] extends { optional: true }
+          ? ResolvePatternType<TPattern[K]["type"]> | undefined
+          : ResolvePatternType<TPattern[K]["type"]>
+        : never
+    : TPattern[K];
+};
+type ResolvePatternType<TArgument extends PatternType | "full"> =
+  TArgument extends "string"
+    ? string
+    : TArgument extends "number"
+      ? number
+      : TArgument extends "full"
+        ? string
+        : TArgument extends string[]
+          ? TArgument[number]
+          : never;
+
+const parseArgs = <const TPattern extends Pattern>(
+  pattern: TPattern,
+  args: string[]
+):
+  | { error: true; message: string }
+  | { error: false; parsed: ResolvePattern<TPattern> } => {
+  const parsed = [];
+  let hadOptionals = false;
+  for (const [i, slice] of pattern.entries()) {
+    const isObject = typeof slice === "object" && "type" in slice;
+    const type = isObject ? slice.type : slice;
+    const optional = isObject && !!slice.optional;
+    if (hadOptionals && !optional) {
+      return {
+        error: true,
+        message:
+          "In this command's pattern, there is an optional argument following a non-optional one.\nThis is an issue with the bot, not your command.",
+      };
+    }
+    hadOptionals ||= optional;
+    const name = isObject && !!slice.name;
+    const repr = name ? `${slice.name} (${type})` : `${type}`;
+    const current = args[i];
+    if (!current) {
+      if (optional) {
+        continue;
+      } else if (type !== "full") {
+        return { error: true, message: `Missing ${repr}.` };
+      }
+    }
+    if (Array.isArray(type)) {
+      if (!type.includes(current)) {
+        return {
+          error: true,
+          message: `${JSON.stringify(current)} has to be one of ${type.map((t) => JSON.stringify(t)).join(", ")}.`,
+        };
+      }
+      parsed.push(current);
+      continue;
+    }
+    switch (type) {
+      case "string": {
+        parsed.push(current);
+        break;
+      }
+      case "number": {
+        const number = Number(current);
+        if (Number.isNaN(number)) {
+          return {
+            error: true,
+            message: `${JSON.stringify(current)} is not a number.`,
+          };
+        }
+        parsed.push(number);
+        break;
+      }
+      case "full": {
+        if (pattern[i + 1]) {
+          return {
+            error: true,
+            message:
+              "In this command's pattern, there is an argument following a `full` argument.\nThis is an issue with the bot, not your command.",
+          };
+        }
+        parsed.push(args.slice(i).join(" "));
+        break;
+      }
+      default:
+        (type) satisfies never;
+    }
+  }
+  return { error: false, parsed: parsed as ResolvePattern<TPattern> };
 };
