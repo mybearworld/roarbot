@@ -29,6 +29,7 @@ export class RoarBot {
    * @param username The username of the account the bot should log into.
    * @param password The password of the account the bot should log into. This can also be a token that will get invalidated when the login succeeds.
    * @throws When the login fails.
+   * @throws When the bot is already logged in.
    * @example
    * ```js
    * const bot = new RoarBot();
@@ -39,6 +40,9 @@ export class RoarBot {
    * > but in an environment variable.
    */
   async login(username: string, password: string) {
+    if (this._token) {
+      throw new Error("This bot is already logged in.");
+    }
     const response = LOGIN_SCHEMA.parse(
       await (
         await fetch(`https://api.meower.org/auth/login`, {
