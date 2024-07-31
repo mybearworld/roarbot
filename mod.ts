@@ -1,6 +1,26 @@
 /**
  * RoarBot is a library for creating bots for the [Meower](https://meower.org)
  * platform. It comes with an easy way to connect to Meower and parse commands.
+ *
+ * ```ts
+ * const bot = new RoarBot();
+ * bot.command("greet", {
+ *   description: "Greet someone!",
+ *   args: [
+ *     { name: "whom", type: "string" },
+ *     { name: "greeting", type: "full" },
+ *   ],
+ *   fn: (reply, [whom, greeting]) => {
+ *     reply(`${greeting || "Hello"}, ${whom}!`);
+ *   },
+ * });
+ * bot.login("BearBot", "········");
+ *
+ * // @BearBot help
+ * // @BearBot greet Josh
+ * // @BearBot greet Josh Hello there
+ * ```
+ *
  * @module
  */
 
