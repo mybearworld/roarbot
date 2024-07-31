@@ -35,6 +35,7 @@ const AUTH_PACKET_SCHEMA = z.object({
   val: z.object({ token: z.string() }),
 });
 
+/** An attachement as in {@link Post}. */
 export type Attachment = {
   filename: string;
   height: number;
@@ -52,6 +53,7 @@ const ATTACHMENT_SCHEMA: z.ZodType<Attachment> = z.object({
   width: z.number(),
 });
 
+/** A post returned from the Meower API. */
 export type Post = {
   attachments: Attachment[];
   edited_at?: number;
@@ -97,6 +99,7 @@ const POST_PACKET_SCHEMA = z.object({
   val: POST_SCHEMA,
 });
 
+/** An attachment as returned from the uploading API. */
 export type UploadsAttachment = {
   bucket: string;
   claimed: boolean;
