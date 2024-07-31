@@ -124,7 +124,7 @@ export class RoarBot {
     this._admins = options?.admins ?? [];
     this.command("help", {
       description: "Shows this message.",
-      pattern: [],
+      args: [],
       fn: (reply) => {
         const commands = this._commands
           .map((command) => {
@@ -321,7 +321,7 @@ export class RoarBot {
     this._commands.push({
       name: name,
       description: options.description ?? null,
-      pattern: options.pattern,
+      pattern: options.args,
       admin: options.admin ?? false,
     });
     this.on("post", (reply, post) => {
@@ -336,7 +336,7 @@ export class RoarBot {
         reply("You can't use this command as it is limited to administrators.");
         return;
       }
-      const parsed = parseArgs(options.pattern, split.slice(2));
+      const parsed = parseArgs(options.args, split.slice(2));
       if (parsed.error) {
         reply(parsed.message);
       } else {
@@ -394,7 +394,7 @@ export type CommandOptions<TPattern extends Pattern> = {
   /** The description of the command. This is shown in the help message. */
   description?: string;
   /** The argument pattern of the command. */
-  pattern: TPattern;
+  args: TPattern;
   /** Whether this command is only usable by administrators. */
   admin?: boolean;
   /** The callback to be called when the command gets executed. */
