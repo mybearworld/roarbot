@@ -286,7 +286,7 @@ export class RoarBot {
    * @throws If the file is too large.
    * @throws If the API returns an error.
    */
-  async upload(file: Blob) {
+  async upload(file: Blob): Promise<UploadsAttachment> {
     if (!this._token) {
       throw new Error("The bot is not logged in.");
     }
