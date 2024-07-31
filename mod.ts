@@ -138,6 +138,7 @@ export class RoarBot {
   private _username?: string;
   private _token?: string;
   private _admins: string[];
+  private _banned: string[];
 
   /**
    * Create a bot.
@@ -145,6 +146,7 @@ export class RoarBot {
    */
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
+    this._banned = options?.banned ?? [];
     this.command("help", {
       description: "Shows this message.",
       args: [],
@@ -355,6 +357,10 @@ export class RoarBot {
       if (split[0] !== `@${this.username}` || split[1] !== name) {
         return;
       }
+      if (this._banned.includes(post.u)) {
+        reply("You are banned from using this bot.");
+        return;
+      }
       if (options.admin && !this._admins.includes(post.u)) {
         reply("You can't use this command as it is limited to administrators.");
         return;
@@ -408,6 +414,10 @@ export type Events = {
 export type RoarBotOptions = {
   /** The administrators of this bot. They can use admin commands. */
   admins?: string[];
+  /**
+   * Users banned from using the bot. Any commands they try to run won't be executed.
+   */
+  banned?: string[];
 };
 
 /**
