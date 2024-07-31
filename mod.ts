@@ -77,6 +77,27 @@ const POST_PACKET_SCHEMA = z.object({
   val: POST_SCHEMA,
 });
 
+export type UploadsAttachment = {
+  bucket: string;
+  claimed: boolean;
+  filename: string;
+  hash: string;
+  id: string;
+  uploaded_at: number;
+  uploaded_by: string;
+};
+const UPLOADS_ATTACHMENT_SCHEMA: z.ZodType<UploadsAttachment> = z.object({
+  bucket: z.string(),
+  claimed: z.boolean(),
+  filename: z.string(),
+  hash: z.string(),
+  id: z.string(),
+  uploaded_at: z.number(),
+  uploaded_by: z.string(),
+});
+
+const ATTACMHENT_MAX_SIZE = 25 << 20;
+
 /**
  * A bot connecting to Meower.
  */
@@ -183,10 +204,11 @@ export class RoarBot {
         return;
       }
       this._events.post.forEach((callback) =>
-        callback((content) => {
+        callback((content, options) => {
           return this.post(content, {
             replies: [parsed.data.val.post_id],
             chat: parsed.data.val.post_origin,
+            ...options,
           });
         }, parsed.data.val),
       );
@@ -213,6 +235,7 @@ export class RoarBot {
    * details.
    * @throws If the bot is not logged in.
    * @throws If the API returns an error.
+   * @throws If {@link RoarBot.prototype.uploadFile} fails.
    * @returns The resulting post. This might be returned later than the post
    * will be appearing via the socket.
    */
@@ -234,7 +257,17 @@ export class RoarBot {
               "Content-Type": "application/json",
               Token: this._token,
             },
-            body: JSON.stringify({ content, reply_to: options?.replies }),
+            body: JSON.stringify({
+              content,
+              reply_to: options?.replies,
+              attachments: await Promise.all(
+                (options?.attachments ?? []).map((attachment) =>
+                  typeof attachment === "string" ? attachment : (
+                    this.upload(attachment).then((attachment) => attachment.id)
+                  ),
+                ),
+              ),
+            }),
           },
         )
       ).json(),
@@ -242,6 +275,37 @@ export class RoarBot {
     if (response.error) {
       throw new Error(`Couldn't post: ${response.type}`);
     }
+    return response;
+  }
+
+  /**
+   * Upload an attachment to Meower for use in posts.
+   * @param file The file to upload.
+   * @returns The uploaded file returned from the API.
+   * @throws If the bot is not logged in.
+   * @throws If the file is too large.
+   * @throws If the API returns an error.
+   */
+  async upload(file: Blob) {
+    if (!this._token) {
+      throw new Error("The bot is not logged in.");
+    }
+    if (file.size > ATTACMHENT_MAX_SIZE) {
+      throw new Error(
+        `The file is too large. Keep it at or under ${ATTACMHENT_MAX_SIZE}B`,
+      );
+    }
+    const form = new FormData();
+    form.set("file", file);
+    const response = UPLOADS_ATTACHMENT_SCHEMA.parse(
+      await (
+        await fetch("https://uploads.meower.org/attachments", {
+          method: "POST",
+          body: form,
+          headers: { Authorization: this._token },
+        })
+      ).json(),
+    );
     return response;
   }
 
@@ -308,7 +372,13 @@ export class RoarBot {
  */
 export type Events = {
   login: (token: string) => void;
-  post: (reply: (content: string) => Promise<Post>, post: Post) => void;
+  post: (
+    reply: (
+      content: string,
+      options?: Omit<PostOptions, "replies" | "chat">,
+    ) => Promise<Post>,
+    post: Post,
+  ) => void;
 };
 
 /** Options that can be passed into {@link RoarBot}. */
@@ -329,7 +399,10 @@ export type CommandOptions<TPattern extends Pattern> = {
   admin?: boolean;
   /** The callback to be called when the command gets executed. */
   fn: (
-    reply: (content: string) => Promise<Post>,
+    reply: (
+      content: string,
+      options?: Omit<PostOptions, "replies" | "chat">,
+    ) => Promise<Post>,
     args: ResolvePattern<TPattern>,
     post: Post,
   ) => void;
@@ -341,6 +414,11 @@ export type CommandOptions<TPattern extends Pattern> = {
 export type PostOptions = {
   /** Post IDs that this post is replying to. */
   replies?: string[];
+  /**
+   * The attachments to upload with a post. These can either be attachment IDs
+   * or blobs that are passed to {@link RoarBot.prototype.upload}
+   */
+  attachments?: (string | Blob)[];
   /**
    * The chat to post to. If this is not specified, the post will be posted to
    * home. The available special chats are:
