@@ -485,7 +485,9 @@ const parseArgs = <const TPattern extends Pattern>(
       if (!type.includes(current)) {
         return {
           error: true,
-          message: `${JSON.stringify(current)} has to be one of ${type.map((t) => JSON.stringify(t)).join(", ")}.`,
+          message: `${JSON.stringify(current)} has to be one of ${type
+            .map((t) => JSON.stringify(t))
+            .join(", ")}.`,
         };
       }
       parsed.push(current);
