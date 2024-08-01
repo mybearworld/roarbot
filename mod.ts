@@ -1,10 +1,10 @@
 /**
  * RoarBot is a library for creating bots for the [Meower](https://meower.org)
  * platform. It comes with an easy way to connect to Meower and parse commands.
- * 
+ *
  * > [!NOTE]
  * > Make sure to always use `await` when possible within commands in order for
- * > potential erorrs to not make your bot crash.
+ * > potential errors to not make your bot crash.
  *
  * ```ts
  * const bot = new RoarBot();
