@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RoarBot.prototype.commands` property for accessing commands.
 - `RoarBot.prototype.ws` property for accessing the current WebSocket.
 - `RoarBot.prototype.setAccountSettings` method for setting various account options.
+- A message for commands that don't exist.
 
 ### Fixed
 

@@ -59,6 +59,15 @@ export class RoarBot {
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
     this._banned = options?.banned ?? [];
+    this.on("post", (reply, post) => {
+      const split = post.p.split(" ");
+      if (
+        split[0] === `@${this._username}` &&
+        !this._commands.find((command) => command.name === split[1])
+      ) {
+        reply(`The command ${JSON.stringify(split[1])} doesn't exist!`);
+      }
+    });
     if (!(options?.help ?? true)) {
       return;
     }
