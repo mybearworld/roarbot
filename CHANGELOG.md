@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.1.0 - 2024-08-01
 
+### Added
+
 - Banning users.
 - Option to disable help command.
 
 ## 1.0.1 - 2024-07-31
+
+### Added
 
 - Example in module documentation.
 - Documentation for `Post`, `Attachment` and `UploadsAttachment`.
