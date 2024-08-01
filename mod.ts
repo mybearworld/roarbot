@@ -33,6 +33,7 @@ import {
   type Post,
   type UploadsAttachment,
 } from "./types.ts";
+export type { Post, UploadsAttachment, Attachment } from "./types.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
 
