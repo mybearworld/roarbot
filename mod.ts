@@ -360,6 +360,11 @@ export class RoarBot {
   get token(): string | undefined {
     return this._token;
   }
+
+  /** The used commands. */
+  get commands() {
+    return [...this._commands];
+  }
 }
 
 /**
