@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customizable messages.
 - `RoarBot.prototype.user` to get a user's profile.
 
+### Fixed
+
+- "The command undefined doesn't exist!" when sending a message only pinging the bot.
+
 ## 1.3.0 - 2024-08-01
 
 ### Added

@@ -81,6 +81,7 @@ export class RoarBot {
       const split = post.p.split(" ");
       if (
         split[0] === `@${this._username}` &&
+        split[1] &&
         !this._commands.find((command) => command.name === split[1])
       ) {
         reply(this._messages.noCommand(JSON.stringify(split[1])));
