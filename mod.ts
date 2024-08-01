@@ -51,6 +51,7 @@ export class RoarBot {
   private _admins: string[];
   private _banned: string[];
   private _ws?: WebSocket;
+  private _messages: Messages;
 
   /**
    * Create a bot.
@@ -59,13 +60,28 @@ export class RoarBot {
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
     this._banned = options?.banned ?? [];
+    this._messages = {
+      noCommand: (command) => `The command ${command} doesn't exist!`,
+      helpDescription: "Shows this message.",
+      helpOptional: "(optional)",
+      helpCommands: "**Commands**",
+      banned: "You are banned from using this bot.",
+      adminLocked:
+        "You can't use this command as it is limited to administrators.",
+      error: "💥 Something exploded. Check the console for more info!",
+      argsMissing: (name) => `Missing ${name}.`,
+      argsNotInSet: (string, set) => `${string} has to be one of ${set}.`,
+      argNan: (string) => `${string} is not a number.`,
+      tooManyArgs: "You have too many arguments.",
+      ...options?.messages,
+    };
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
       if (
         split[0] === `@${this._username}` &&
         !this._commands.find((command) => command.name === split[1])
       ) {
-        reply(`The command ${JSON.stringify(split[1])} doesn't exist!`);
+        reply(this._messages.noCommand(JSON.stringify(split[1])));
       }
     });
     if (!(options?.help ?? true)) {
@@ -83,7 +99,9 @@ export class RoarBot {
                   "(" +
                   (("name" in patternType ? `${patternType.name}: ` : "") +
                     stringifyPatternType(patternType.type) +
-                    (patternType.optional ? " (optional)" : "")) +
+                    (patternType.optional ?
+                      ` ${this._messages.helpOptional}`
+                    : "")) +
                   ")"
                 : `(${stringifyPatternType(patternType)})`,
               )
@@ -96,7 +114,7 @@ export class RoarBot {
             );
           })
           .join("\n");
-        reply(`**Commands:**\n${commands}`);
+        reply(`${this._messages.helpCommands}\n${commands}`);
       },
     });
   }
@@ -323,21 +341,21 @@ export class RoarBot {
         return;
       }
       if (this._banned.includes(post.u)) {
-        reply("You are banned from using this bot.");
+        reply(this._messages.banned);
         return;
       }
       if (options.admin && !this._admins.includes(post.u)) {
-        reply("You can't use this command as it is limited to administrators.");
+        reply(this._messages.adminLocked);
         return;
       }
-      const parsed = parseArgs(options.args, split.slice(2));
+      const parsed = parseArgs(options.args, split.slice(2), this._messages);
       if (parsed.error) {
         reply(parsed.message);
       } else {
         try {
           await options.fn(reply, parsed.parsed, post);
         } catch (e) {
-          reply("💥 Something exploded. Check the console for more info!");
+          reply(this._messages.error);
           console.error(e);
         }
       }
@@ -441,6 +459,40 @@ export type RoarBotOptions = {
    * Whether to have a generated help command. By default, this is true.
    */
   help?: boolean;
+  /**
+   * Different messages the bot might send. Each of them has a default that
+   * will be used if none are provided here.
+   */
+  messages?: Partial<Messages>;
+};
+
+/**
+ * Different messgaes the bot might send. Each of them has a default that will
+ * be used if none are provided here.
+ */
+export type Messages = {
+  /** When a command doesn't exist. */
+  noCommand: (command: string) => string;
+  /** Description of the help command. */
+  helpDescription: string;
+  /** Indicator that an argument is optional in the help command. */
+  helpOptional: string;
+  /** Heading for the commands in the help command. */
+  helpCommands: string;
+  /** Message for when a user is banned. */
+  banned: string;
+  /** Message for when someone tries to run an admin-locked command. */
+  adminLocked: string;
+  /** Message for when something goes wrong. */
+  error: string;
+  /** Message for when an argument is missing. */
+  argsMissing: (name: string) => string;
+  /** Message for when a string is not in the expected set of strings. */
+  argsNotInSet: (string: string, set: string) => string;
+  /** Message for when something is not a number. */
+  argNan: (string: string) => string;
+  /** Message for when there are too many arguments. */
+  tooManyArgs: string;
 };
 
 /**
@@ -602,6 +654,7 @@ type ResolvePatternType<TArgument extends PatternType> =
 const parseArgs = <const TPattern extends Pattern>(
   pattern: TPattern,
   args: string[],
+  messages: Messages,
 ):
   | { error: true; message: string }
   | { error: false; parsed: ResolvePattern<TPattern> } => {
@@ -627,16 +680,17 @@ const parseArgs = <const TPattern extends Pattern>(
       if (optional) {
         continue;
       } else if (type !== "full") {
-        return { error: true, message: `Missing ${repr}.` };
+        return { error: true, message: messages.argsMissing(repr) };
       }
     }
     if (Array.isArray(type)) {
       if (!type.includes(current)) {
         return {
           error: true,
-          message: `${JSON.stringify(current)} has to be one of ${type
-            .map((t) => JSON.stringify(t))
-            .join(", ")}.`,
+          message: messages.argsNotInSet(
+            JSON.stringify(current),
+            type.map((t) => JSON.stringify(t)).join(", "),
+          ),
         };
       }
       parsed.push(current);
@@ -652,7 +706,7 @@ const parseArgs = <const TPattern extends Pattern>(
         if (Number.isNaN(number)) {
           return {
             error: true,
-            message: `${JSON.stringify(current)} is not a number.`,
+            message: messages.argNan(JSON.stringify(current)),
           };
         }
         parsed.push(number);
@@ -675,7 +729,7 @@ const parseArgs = <const TPattern extends Pattern>(
     }
   }
   if (!hadFull && args.length !== parsed.length) {
-    return { error: true, message: "You have too many arguments." };
+    return { error: true, message: messages.tooManyArgs };
   }
   return { error: false, parsed: parsed as ResolvePattern<TPattern> };
 };
