@@ -94,3 +94,39 @@ export const UPLOADS_ATTACHMENT_SCHEMA: z.ZodType<UploadsAttachment> = z.object(
     uploaded_by: z.string(),
   },
 );
+
+/** A user from the API. */
+export type User = {
+  _id: string;
+  avatar: string;
+  avatar_color: string;
+  banned: boolean;
+  created: number | null;
+  flags: number;
+  last_seen: number | null;
+  lower_username: string;
+  lvl: number;
+  permissions: number | null;
+  pfp_data: number | null;
+  quote: string | null;
+  uuid: string | null;
+};
+export const USER_SCHEMA: z.ZodType<User> = z.object({
+  _id: z.string(),
+  avatar: z.string(),
+  avatar_color: z.string(),
+  banned: z.boolean(),
+  created: z.number().nullable(),
+  flags: z.number(),
+  last_seen: z.number().nullable(),
+  lower_username: z.string(),
+  lvl: z.number(),
+  permissions: z.number().nullable(),
+  pfp_data: z.number().nullable(),
+  quote: z.string().nullable(),
+  uuid: z.string().nullable(),
+});
+
+export const API_USER_SCHEMA = USER_SCHEMA.and(
+  z.object({ error: z.literal(false) }),
+).or(z.object({ error: z.literal(true), type: z.string() }));

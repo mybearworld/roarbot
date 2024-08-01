@@ -30,10 +30,12 @@ import {
   API_POST_SCHEMA,
   POST_PACKET_SCHEMA,
   UPLOADS_ATTACHMENT_SCHEMA,
+  API_USER_SCHEMA,
   type Post,
   type UploadsAttachment,
+  type User,
 } from "./types.ts";
-export type { Post, UploadsAttachment, Attachment } from "./types.ts";
+export type { Post, UploadsAttachment, Attachment, User } from "./types.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
 
@@ -242,6 +244,20 @@ export class RoarBot {
     );
     if (response.error) {
       throw new Error(`Couldn't post: ${response.type}`);
+    }
+    return response;
+  }
+
+  async user(username: string): Promise<User> {
+    const response = API_USER_SCHEMA.parse(
+      await (
+        await fetch(
+          `https://api.meower.org/users/${encodeURIComponent(username)}`,
+        )
+      ).json(),
+    );
+    if (response.error) {
+      throw new Error(`Couldn't get user. Error: ${response.type}`);
     }
     return response;
   }
