@@ -147,6 +147,9 @@ export class RoarBot {
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
     this._banned = options?.banned ?? [];
+    if (!(options?.help ?? true)) {
+      return;
+    }
     this.command("help", {
       description: "Shows this message.",
       args: [],
@@ -418,6 +421,10 @@ export type RoarBotOptions = {
    * Users banned from using the bot. Any commands they try to run won't be executed.
    */
   banned?: string[];
+  /**
+   * Whether to have a generated help command. By default, this is true.
+   */
+  help?: boolean;
 };
 
 /**
