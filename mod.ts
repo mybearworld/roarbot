@@ -253,6 +253,12 @@ export class RoarBot {
     return response;
   }
 
+  /**
+   * Get the profile of a user.
+   * @param username The username to get the profile of.
+   * @returns The user profile.
+   * @throws If the API returns an error.
+   */
   async user(username: string): Promise<User> {
     const response = API_USER_SCHEMA.parse(
       await (
