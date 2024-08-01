@@ -256,6 +256,40 @@ export class RoarBot {
   }
 
   /**
+   * Sets the account settings of the account.
+   * @param options The options to set.
+   * @throws If the bot is not logged in.
+   * @throws If the API returns an error.
+   */
+  async setAccountSettings(options: SetAccountSettingsOptions) {
+    if (!this._token) {
+      throw new Error("The bot is not logged in.");
+    }
+    const status = (
+      await fetch("https://api.meower.org/me/config", {
+        method: "PATCH",
+        headers: {
+          Token: this._token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...options,
+          avatar_color: options.avatarColor,
+          unread_inbox: options.unreadInbox,
+          hide_blocked_users: options.hideBlockedUsers,
+          favorited_chats: options.favoritedChats,
+        }),
+      })
+    ).status;
+    if (status === 200) {
+      return;
+    }
+    throw new Error(
+      `Failed to set account settings. The server responded with ${status}`,
+    );
+  }
+
+  /**
    * Register a new command.
    * @param name The name of the command.
    * @param options Some options. See {@link CommandOptions} for details.
@@ -444,6 +478,43 @@ export type PostOptions = {
    * - `livechat`
    */
   chat?: string;
+};
+
+/**
+ * Options that can be passed into {@link RoarBot.prototype.setAccountSettings}
+ * to modify.
+ */
+export type SetAccountSettingsOptions = {
+  /** A default profile picture. */
+  pfp?: number;
+  /** An uploaded profile picture. TODO: Make uploading icons possible */
+  avatar?: string;
+  /** The profile color. */
+  avatarColor?: string;
+  /** The quote. */
+  quote?: string;
+  /** Whether the account has unread messages in their inbox. */
+  unreadInbox?: boolean;
+  /** The theme the account uses on Meower Svelte. */
+  theme?: string;
+  /** The layout the account uses on Meower Svelte. */
+  layout?: string;
+  /** Whether the account has sound effects enabled on Meower Svelte. */
+  sfx?: boolean;
+  /** Whether the account has background music enabled on Meower Svelte. */
+  bgm?: boolean;
+  /** The song the account uses as background music on Meower Svelte. */
+  bgmSong?: number;
+  /** Whether the account has debug mode enabled on Meower Svelte. */
+  debug?: boolean;
+  /**
+   * Whether the account is not recieving posts from blocked users.
+   * > [!NOTE]
+   * > For this to take effect, the account has to log in again.
+   */
+  hideBlockedUsers?: boolean;
+  /** The chats the user has favorited. */
+  favoritedChats?: string[];
 };
 
 /**
