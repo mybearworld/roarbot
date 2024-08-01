@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `RoarBot.prototype.run` to separate code into separate files.
+
 ### Fixed
 
 - Require unique names for each command.

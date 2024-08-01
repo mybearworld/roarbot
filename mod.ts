@@ -164,7 +164,7 @@ export class RoarBot {
    * @param event The event to listen for.
    * @param callback The callback to execute when the event fires.
    * @example
-   * ```js
+   * ```ts
    * bot.on("login", () => console.log("Hooray!"));
    * ```
    */
@@ -264,7 +264,9 @@ export class RoarBot {
     options: CommandOptions<TPattern>,
   ) {
     if (this._commands.some((command) => command.name === name)) {
-      throw new Error(`A command with the name of ${JSON.stringify(name)} already exists.`);
+      throw new Error(
+        `A command with the name of ${JSON.stringify(name)} already exists.`,
+      );
     }
     this._commands.push({
       name: name,
@@ -300,6 +302,47 @@ export class RoarBot {
         }
       }
     });
+  }
+
+  /**
+   * Passes the bot to different modules. This should be used to separate
+   * different bits of functionality, like commands, into different files.
+   * @param modules An array of dynamically imported modules with a default
+   * export that gets in the bot.
+   *
+   * @example
+   * ```ts
+   * const bot = new RoarBot();
+   * bot.run(
+   *   import("./commands/add.ts"),
+   *   import("./commands/ping.ts"),
+   * );
+   * bot.login("BearBot", "········");
+   *
+   * // ==== ./commands/add.ts ====
+   * import type { RoarBot } from "../mod.ts";
+   *
+   * export default (bot: RoarBot) => {
+   *   bot.command("add", {
+   *     args: ["number", "number"],
+   *     fn: (reply, [n1, n2]) => reply((n1 + n2).toString()),
+   *   });
+   * };
+   *
+   * // ==== ./commands/ping.ts ====
+   * import type { RoarBot } from "../mod.ts";
+   *
+   * export default (bot: RoarBot) => {
+   *   bot.command("ping", {
+   *     args: [],
+   *     fn: (reply) => reply("Pong"),
+   *   });
+   * };
+   * ```
+   */
+  async run(...modules: Promise<{ default: (bot: RoarBot) => void }>[]) {
+    const awaitedModules = await Promise.all(modules);
+    awaitedModules.forEach((module) => module.default(this));
   }
 
   /**
