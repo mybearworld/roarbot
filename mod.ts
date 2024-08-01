@@ -45,12 +45,7 @@ export class RoarBot {
     login: [],
     post: [],
   };
-  private _commands: {
-    name: string;
-    description: string | null;
-    pattern: Pattern;
-    admin: boolean;
-  }[] = [];
+  private _commands: Command[] = [];
   private _username?: string;
   private _token?: string;
   private _admins: string[];
@@ -398,7 +393,7 @@ export class RoarBot {
   }
 
   /** The used commands. */
-  get commands() {
+  get commands(): Command[] {
     return [...this._commands];
   }
 
@@ -406,7 +401,7 @@ export class RoarBot {
    * The open WebSocket connection. This is `undefined` if the bot is not
    * logged in.
    */
-  get ws() {
+  get ws(): WebSocket | undefined {
     return this._ws;
   }
 }
@@ -458,6 +453,18 @@ export type CommandOptions<TPattern extends Pattern> = {
     args: ResolvePattern<TPattern>,
     post: Post,
   ) => void | Promise<void>;
+};
+
+/** A command when it has been added to a bot. */
+export type Command = {
+  /** The name of the command. */
+  name: string;
+  /** The description of the command. */
+  description: string | null;
+  /** The pattern the arguments use. */
+  pattern: Pattern;
+  /** Whether the command is limited to administrators. */
+  admin: boolean;
 };
 
 /**
