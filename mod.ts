@@ -55,6 +55,7 @@ export class RoarBot {
   private _token?: string;
   private _admins: string[];
   private _banned: string[];
+  private _ws?: WebSocket;
 
   /**
    * Create a bot.
@@ -132,6 +133,7 @@ export class RoarBot {
     const ws = new WebSocket(
       `https://server.meower.org?v=1&token=${response.token}`,
     );
+    this._ws = ws;
     ws.addEventListener("message", ({ data }) => {
       const parsed = AUTH_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
@@ -364,6 +366,14 @@ export class RoarBot {
   /** The used commands. */
   get commands() {
     return [...this._commands];
+  }
+
+  /**
+   * The open WebSocket connection. This is `undefined` if the bot is not
+   * logged in.
+   */
+  get ws() {
+    return this._ws;
   }
 }
 
