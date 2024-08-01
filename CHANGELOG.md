@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - "The command undefined doesn't exist!" when sending a message only pinging the bot.
+- Made failures to post (as caused by i.e. rate limits) not crash the bot.
 
 ## 1.3.0 - 2024-08-01
 

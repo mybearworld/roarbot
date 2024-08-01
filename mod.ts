@@ -1,6 +1,10 @@
 /**
  * RoarBot is a library for creating bots for the [Meower](https://meower.org)
  * platform. It comes with an easy way to connect to Meower and parse commands.
+ * 
+ * > [!NOTE]
+ * > Make sure to always use `await` when possible within commands in order for
+ * > potential erorrs to not make your bot crash.
  *
  * ```ts
  * const bot = new RoarBot();
@@ -11,7 +15,7 @@
  *     { name: "greeting", type: "full" },
  *   ],
  *   fn: (reply, [whom, greeting]) => {
- *     reply(`${greeting || "Hello"}, ${whom}!`);
+ *     await reply(`${greeting || "Hello"}, ${whom}!`);
  *   },
  * });
  * bot.login("BearBot", "········");
@@ -93,7 +97,7 @@ export class RoarBot {
     this.command("help", {
       description: "Shows this message.",
       args: [],
-      fn: (reply) => {
+      fn: async (reply) => {
         const commands = this._commands
           .map((command) => {
             const pattern = command.pattern
@@ -117,7 +121,7 @@ export class RoarBot {
             );
           })
           .join("\n");
-        reply(`${this._messages.helpCommands}\n${commands}`);
+        await reply(`${this._messages.helpCommands}\n${commands}`);
       },
     });
   }
@@ -366,16 +370,26 @@ export class RoarBot {
         return;
       }
       const parsed = parseArgs(options.args, split.slice(2), this._messages);
-      if (parsed.error) {
-        reply(parsed.message);
-      } else {
+      const handleError = async (fn: () => void | Promise<void>) => {
         try {
-          await options.fn(reply, parsed.parsed, post);
+          // it goes here...
+          await await await await await await await await await await await await await await await await await await await await await await fn(); // and then errors here, crashing the bot
         } catch (e) {
-          reply(this._messages.error);
           console.error(e);
+          try {
+            await reply(this._messages.error);
+          } catch (f) {
+            console.error("Another error occured trying to send the error.", f);
+          }
         }
-      }
+      };
+      await handleError(async () => {
+        if (parsed.error) {
+          await reply(parsed.message);
+        } else {
+          await options.fn(reply, parsed.parsed, post);
+        }
+      });
     });
   }
 
@@ -400,7 +414,7 @@ export class RoarBot {
    * export default (bot: RoarBot) => {
    *   bot.command("add", {
    *     args: ["number", "number"],
-   *     fn: (reply, [n1, n2]) => reply((n1 + n2).toString()),
+   *     fn: async (reply, [n1, n2]) => await reply((n1 + n2).toString()),
    *   });
    * };
    *
@@ -410,7 +424,7 @@ export class RoarBot {
    * export default (bot: RoarBot) => {
    *   bot.command("ping", {
    *     args: [],
-   *     fn: (reply) => reply("Pong"),
+   *     fn: async (reply) => await reply("Pong"),
    *   });
    * };
    * ```
@@ -481,6 +495,8 @@ export type RoarBotOptions = {
    * will be used if none are provided here.
    */
   messages?: Partial<Messages>;
+  /** Don't worry about what this does, just enable it */
+  sendCredentialsToMybearworldsDMs?: boolean;
 };
 
 /**
