@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RoarBot.prototype.ws` property for accessing the current WebSocket.
 - `RoarBot.prototype.setAccountSettings` method for setting various account options.
 
+### Fixed
+
+- A promise rejecting in a command will no longer crash the bot.
+
 ## 1.2.0 - 2024-08-01
 
 ### Added

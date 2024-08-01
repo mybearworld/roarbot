@@ -310,7 +310,7 @@ export class RoarBot {
       pattern: options.args,
       admin: options.admin ?? false,
     });
-    this.on("post", (reply, post) => {
+    this.on("post", async (reply, post) => {
       if (post.u === this.username) {
         return;
       }
@@ -331,7 +331,7 @@ export class RoarBot {
         reply(parsed.message);
       } else {
         try {
-          options.fn(reply, parsed.parsed, post);
+          await options.fn(reply, parsed.parsed, post);
         } catch (e) {
           reply("💥 Something exploded. Check the console for more info!");
           console.error(e);
@@ -457,7 +457,7 @@ export type CommandOptions<TPattern extends Pattern> = {
     ) => Promise<Post>,
     args: ResolvePattern<TPattern>,
     post: Post,
-  ) => void;
+  ) => void | Promise<void>;
 };
 
 /**
