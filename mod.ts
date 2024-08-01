@@ -257,11 +257,15 @@ export class RoarBot {
    * Register a new command.
    * @param name The name of the command.
    * @param options Some options. See {@link CommandOptions} for details.
+   * @throws If a command with that name is already present.
    */
   command<const TPattern extends Pattern>(
     name: string,
     options: CommandOptions<TPattern>,
   ) {
+    if (this._commands.some((command) => command.name === name)) {
+      throw new Error(`A command with the name of ${JSON.stringify(name)} already exists.`);
+    }
     this._commands.push({
       name: name,
       description: options.description ?? null,
