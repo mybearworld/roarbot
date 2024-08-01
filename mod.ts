@@ -378,8 +378,7 @@ export class RoarBot {
       const parsed = parseArgs(options.args, split.slice(2), this._messages);
       const handleError = async (fn: () => void | Promise<void>) => {
         try {
-          // it goes here...
-          await await await await await await await await await await await await await await await await await await await await await await fn(); // and then errors here, crashing the bot
+          await fn();
         } catch (e) {
           console.error(e);
           try {
