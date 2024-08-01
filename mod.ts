@@ -431,7 +431,7 @@ export type Pattern = (
 )[];
 
 /**
- * Converts the passed in `TArguments` to its corresponding TypeScript type.
+ * Converts the passed in `TPattern` to its corresponding TypeScript type.
  */
 export type ResolvePattern<TPattern extends Pattern> = {
   [K in keyof TPattern]: K extends `${number}` ?
