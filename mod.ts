@@ -113,21 +113,18 @@ export class RoarBot {
             const pattern = command.pattern
               .map((patternType) =>
                 typeof patternType === "object" && !Array.isArray(patternType) ?
-                  "(" +
+                  (patternType.optional ? "[" : "<") +
                   (("name" in patternType ? `${patternType.name}: ` : "") +
-                    stringifyPatternType(patternType.type) +
-                    (patternType.optional ?
-                      ` ${this._messages.helpOptional}`
-                    : "")) +
-                  ")"
+                    stringifyPatternType(patternType.type)) +
+                  (patternType.optional ? "]" : ">")
                 : `(${stringifyPatternType(patternType)})`,
               )
               .join(" ");
             return (
               (command.admin ? "🔒 " : "") +
-              `@${this.username} ${command.name}` +
-              (command.description ? ` - ${command.description}` : "") +
-              (pattern ? `  - ${pattern}` : "")
+              `@${this.username} ${command.name} ${pattern}` +
+              (command.description ? `\n_${command.description}_` : "") +
+              "\n"
             );
           })
           .join("\n");
@@ -544,7 +541,7 @@ export type Messages = {
   noCommand: (command: string) => string;
   /** Description of the help command. */
   helpDescription: string;
-  /** Indicator that an argument is optional in the help command. */
+  /** @deprecated Unused */
   helpOptional: string;
   /** Heading for the commands in the help command. */
   helpCommands: string;

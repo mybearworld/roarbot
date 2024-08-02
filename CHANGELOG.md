@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Checking for updates.
 
+### Changed
+
+- Nicer format for help command.
+
 ## 1.4.1 - 2024-08-01
 
 _Documentation and code style fixes, no functionality change_
