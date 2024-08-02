@@ -29,6 +29,7 @@
  */
 
 import {
+  JSR_UPDATE,
   AUTH_PACKET_SCHEMA,
   LOGIN_SCHEMA,
   API_POST_SCHEMA,
@@ -42,6 +43,7 @@ import {
 export type { Post, UploadsAttachment, Attachment, User } from "./types.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
+const version = "1.4.1";
 
 /**
  * A bot connecting to Meower.
@@ -58,6 +60,7 @@ export class RoarBot {
   private _banned: string[];
   private _ws?: WebSocket;
   private _messages: Messages;
+  private _foundUpdate = false;
 
   /**
    * Create a bot.
@@ -81,6 +84,13 @@ export class RoarBot {
       tooManyArgs: "You have too many arguments.",
       ...options?.messages,
     };
+    this._checkForUpdates();
+    setInterval(
+      () => {
+        this._checkForUpdates();
+      },
+      1000 * 60 * 60,
+    );
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
       if (
@@ -124,6 +134,27 @@ export class RoarBot {
         await reply(`${this._messages.helpCommands}\n${commands}`);
       },
     });
+  }
+
+  private async _checkForUpdates() {
+    if (this._foundUpdate) {
+      return;
+    }
+    try {
+      const response = JSR_UPDATE.parse(
+        await (await fetch("https://jsr.io/@mbw/roarbot/meta.json")).json(),
+      );
+      if (version !== response.latest) {
+        console.log(
+          `A new RoarBot version is available! ${version} → ${response.latest}\nSee the changelog for the changes: https://github.com/mybearworld/roarbot/blob/main/CHANGELOG.md`,
+        );
+      }
+      this._foundUpdate = true;
+    } catch {
+      console.error(
+        "Failed to check for RoarBot updates. Ensure that you're on a recent version!",
+      );
+    }
   }
 
   /**
@@ -781,3 +812,6 @@ const stringifyPatternType = (patternType: PatternType) => {
     : patternType.map((option) => JSON.stringify(option)).join(" | ")
   );
 };
+
+const bot = new RoarBot();
+bot.login("abcdef", "SecurePass");

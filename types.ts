@@ -1,5 +1,9 @@
 import { z } from "npm:zod@3";
 
+export const JSR_UPDATE = z.object({
+  latest: z.string(),
+});
+
 export const LOGIN_SCHEMA = z.discriminatedUnion("error", [
   z.object({ error: z.literal(false), token: z.string() }),
   z.object({ error: z.literal(true), type: z.string() }),
