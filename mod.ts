@@ -461,7 +461,9 @@ export class RoarBot {
    * export default (bot: RoarBot) => {
    *   bot.command("add", {
    *     args: ["number", "number"],
-   *     fn: async (reply, [n1, n2]) => await reply((n1 + n2).toString()),
+   *     fn: async (reply, [n1, n2]) => {
+   *       await reply((n1 + n2).toString());
+   *     },
    *   });
    * };
    *
@@ -471,7 +473,9 @@ export class RoarBot {
    * export default (bot: RoarBot) => {
    *   bot.command("ping", {
    *     args: [],
-   *     fn: async (reply) => await reply("Pong"),
+   *     fn: async (reply) => {
+   *       await reply("Pong");
+   *     },
    *   });
    * };
    * ```
