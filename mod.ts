@@ -25,6 +25,39 @@
  * // @BearBot greet Josh Hello there
  * ```
  *
+ * ```ts
+ * const bot = new RoarBot();
+ * bot.run(
+ *   import("./commands/add.ts"),
+ *   import("./commands/ping.ts"),
+ * );
+ * bot.login("BearBot", "········");
+ *
+ * // ==== ./commands/add.ts ====
+ * import type { RoarBot } from "../mod.ts";
+ *
+ * export default (bot: RoarBot) => {
+ *   bot.command("add", {
+ *     args: ["number", "number"],
+ *     fn: async (reply, [n1, n2]) => {
+ *       await reply((n1 + n2).toString());
+ *     },
+ *   });
+ * };
+ *
+ * // ==== ./commands/ping.ts ====
+ * import type { RoarBot } from "../mod.ts";
+ *
+ * export default (bot: RoarBot) => {
+ *   bot.command("ping", {
+ *     args: [],
+ *     fn: async (reply) => {
+ *       await reply("Pong");
+ *     },
+ *   });
+ * };
+ * ```
+ *
  * @module
  */
 
