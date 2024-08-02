@@ -262,6 +262,9 @@ export class RoarBot {
         }, parsed.data.val),
       );
     });
+    ws.addEventListener("close", (ev) => {
+      console.log("Connection closed.", ev);
+    })
   }
 
   /**
