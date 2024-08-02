@@ -14,7 +14,7 @@
  *     { name: "whom", type: "string" },
  *     { name: "greeting", type: "full" },
  *   ],
- *   fn: (reply, [whom, greeting]) => {
+ *   fn: async (reply, [whom, greeting]) => {
  *     await reply(`${greeting || "Hello"}, ${whom}!`);
  *   },
  * });
@@ -812,6 +812,3 @@ const stringifyPatternType = (patternType: PatternType) => {
     : patternType.map((option) => JSON.stringify(option)).join(" | ")
   );
 };
-
-const bot = new RoarBot();
-bot.login("abcdef", "SecurePass");
