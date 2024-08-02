@@ -73,7 +73,7 @@ export class RoarBot {
       noCommand: (command) => `The command ${command} doesn't exist!`,
       helpDescription: "Shows this message.",
       helpOptional: "(optional)",
-      helpCommands: "**Commands**",
+      helpCommands: "## Commands",
       banned: "You are banned from using this bot.",
       adminLocked:
         "You can't use this command as it is limited to administrators.",
@@ -108,25 +108,38 @@ export class RoarBot {
       description: "Shows this message.",
       args: [],
       fn: async (reply) => {
-        const commands = this._commands
-          .map((command) => {
-            const pattern = command.pattern
-              .map((patternType) =>
-                typeof patternType === "object" && !Array.isArray(patternType) ?
-                  (patternType.optional ? "[" : "<") +
-                  (("name" in patternType ? `${patternType.name}: ` : "") +
-                    stringifyPatternType(patternType.type)) +
-                  (patternType.optional ? "]" : ">")
-                : `(${stringifyPatternType(patternType)})`,
-              )
-              .join(" ");
-            return (
-              (command.admin ? "🔒 " : "") +
-              `@${this.username} ${command.name} ${pattern}` +
-              (command.description ? `\n_${command.description}_` : "") +
-              "\n"
-            );
-          })
+        const commands = Object.entries(
+          Object.groupBy(this._commands, (command) => command.category),
+        )
+          .map(
+            ([name, commands]) =>
+              `### ${name}\n` +
+              (commands ?? [])
+                .map((command) => {
+                  const pattern = command.pattern
+                    .map((patternType) =>
+                      (
+                        typeof patternType === "object" &&
+                        !Array.isArray(patternType)
+                      ) ?
+                        (patternType.optional ? "[" : "<") +
+                        (("name" in patternType ?
+                          `${patternType.name}: `
+                        : "") +
+                          stringifyPatternType(patternType.type)) +
+                        (patternType.optional ? "]" : ">")
+                      : `(${stringifyPatternType(patternType)})`,
+                    )
+                    .join(" ");
+                  return (
+                    (command.admin ? "🔒 " : "") +
+                    `@${this.username} ${command.name} ${pattern}` +
+                    (command.description ? `\n_${command.description}_` : "") +
+                    "\n"
+                  );
+                })
+                .join("\n"),
+          )
           .join("\n");
         await reply(`${this._messages.helpCommands}\n${commands}`);
       },
@@ -384,6 +397,7 @@ export class RoarBot {
     this._commands.push({
       name: name,
       description: options.description ?? null,
+      category: options.category ?? "None",
       pattern: options.args,
       admin: options.admin ?? false,
     });
@@ -567,6 +581,8 @@ export type Messages = {
 export type CommandOptions<TPattern extends Pattern> = {
   /** The description of the command. This is shown in the help message. */
   description?: string;
+  /** The category the command is in. This is shown in the help message. */
+  category?: string;
   /** The argument pattern of the command. */
   args: TPattern;
   /** Whether this command is only usable by administrators. */
@@ -586,6 +602,8 @@ export type CommandOptions<TPattern extends Pattern> = {
 export type Command = {
   /** The name of the command. */
   name: string;
+  /** The category of the command. */
+  category: string;
   /** The description of the command. */
   description: string | null;
   /** The pattern the arguments use. */
