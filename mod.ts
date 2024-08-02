@@ -76,7 +76,7 @@ import {
 export type { Post, UploadsAttachment, Attachment, User } from "./types.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
-const version = "1.5.0";
+const version = "1.5.1";
 
 /**
  * A bot connecting to Meower.
