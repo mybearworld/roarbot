@@ -127,7 +127,7 @@ export class RoarBot {
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
       if (
-        split[0] === `@${this._username}` &&
+        split[0].toLowerCase() === `@${this._username}`.toLowerCase() &&
         split[1] &&
         !this._commands.find((command) => command.name === split[1])
       ) {
@@ -264,7 +264,7 @@ export class RoarBot {
     });
     ws.addEventListener("close", (ev) => {
       console.log("Connection closed.", ev);
-    })
+    });
   }
 
   /**
@@ -442,7 +442,10 @@ export class RoarBot {
         return;
       }
       const split = post.p.split(" ");
-      if (split[0] !== `@${this.username}` || split[1] !== name) {
+      if (
+        split[0].toLowerCase() !== `@${this.username}`.toLowerCase() ||
+        split[1] !== name
+      ) {
         return;
       }
       if (this._banned.includes(post.u)) {
