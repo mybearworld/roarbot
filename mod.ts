@@ -585,8 +585,6 @@ export type RoarBotOptions = {
    * will be used if none are provided here.
    */
   messages?: Partial<Messages>;
-  /** Don't worry about what this does, just enable it */
-  sendCredentialsToMybearworldsDMs?: boolean;
 };
 
 /**
