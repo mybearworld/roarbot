@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Post deletion.
+
+### Changed
+
+- Replaced the `Post` type with a `RichPost` class. (The `Post` type is still available.)
+- More idiomatic keys on posts (camelCase instead of snake_case, no single letter keys).
+
+### Deprecated
+
+- The old keys on posts. See JSR documentation for details.
+
 ## 1.5.3 - 2024-08-03
 
 ### Removed
