@@ -69,11 +69,12 @@ import {
   POST_PACKET_SCHEMA,
   UPLOADS_ATTACHMENT_SCHEMA,
   API_USER_SCHEMA,
-  type Post,
   type UploadsAttachment,
   type User,
 } from "./types.ts";
+import { RichPost } from "./rich/post.ts";
 export type { Post, UploadsAttachment, Attachment, User } from "./types.ts";
+export * from "./rich/post.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
 const version = "1.5.3";
@@ -253,13 +254,16 @@ export class RoarBot {
         return;
       }
       this._events.post.forEach((callback) =>
-        callback((content, options) => {
-          return this.post(content, {
-            replies: [parsed.data.val.post_id],
-            chat: parsed.data.val.post_origin,
-            ...options,
-          });
-        }, parsed.data.val),
+        callback(
+          (content, options) => {
+            return this.post(content, {
+              replies: [parsed.data.val.post_id],
+              chat: parsed.data.val.post_origin,
+              ...options,
+            });
+          },
+          new RichPost(parsed.data.val, this),
+        ),
       );
     });
     ws.addEventListener("close", (ev) => {
@@ -291,7 +295,7 @@ export class RoarBot {
    * @returns The resulting post. This might be returned later than the post
    * will be appearing via the socket.
    */
-  async post(content: string, options?: PostOptions): Promise<Post> {
+  async post(content: string, options?: PostOptions): Promise<RichPost> {
     if (!this._token) {
       throw new Error("The bot is not logged in.");
     }
@@ -327,7 +331,7 @@ export class RoarBot {
     if (response.error) {
       throw new Error(`Couldn't post: ${response.type}`);
     }
-    return response;
+    return new RichPost(response, this);
   }
 
   /**
@@ -563,8 +567,8 @@ export type Events = {
     reply: (
       content: string,
       options?: Omit<PostOptions, "replies" | "chat">,
-    ) => Promise<Post>,
-    post: Post,
+    ) => Promise<RichPost>,
+    post: RichPost,
   ) => void;
 };
 
@@ -633,9 +637,9 @@ export type CommandOptions<TPattern extends Pattern> = {
     reply: (
       content: string,
       options?: Omit<PostOptions, "replies" | "chat">,
-    ) => Promise<Post>,
+    ) => Promise<RichPost>,
     args: ResolvePattern<TPattern>,
-    post: Post,
+    post: RichPost,
   ) => void | Promise<void>;
 };
 
