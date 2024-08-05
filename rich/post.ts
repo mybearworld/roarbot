@@ -149,14 +149,14 @@ export class RichPost implements Post {
     if (this._bot.username?.toLowerCase() !== this.username.toLowerCase()) {
       throw new Error("This post is not made by the bot.");
     }
-    const status = (
-      await fetch(`https://api.meower.org/posts?id=${this.id}`, {
-        method: "DELETE",
-        headers: { Token: this._bot.token },
-      })
-    ).status;
-    if (status !== 200) {
-      throw new Error(`Couldn't delete post. The API returned ${status}`);
+    const response = await fetch(`https://api.meower.org/posts?id=${this.id}`, {
+      method: "DELETE",
+      headers: { Token: this._bot.token },
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Couldn't delete post. The API returned ${response.status}`,
+      );
     }
   }
 }

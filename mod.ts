@@ -395,27 +395,25 @@ export class RoarBot {
     if (!this._token) {
       throw new Error("The bot is not logged in.");
     }
-    const status = (
-      await fetch("https://api.meower.org/me/config", {
-        method: "PATCH",
-        headers: {
-          Token: this._token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...options,
-          avatar_color: options.avatarColor,
-          unread_inbox: options.unreadInbox,
-          hide_blocked_users: options.hideBlockedUsers,
-          favorited_chats: options.favoritedChats,
-        }),
-      })
-    ).status;
-    if (status === 200) {
+    const response = await fetch("https://api.meower.org/me/config", {
+      method: "PATCH",
+      headers: {
+        Token: this._token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...options,
+        avatar_color: options.avatarColor,
+        unread_inbox: options.unreadInbox,
+        hide_blocked_users: options.hideBlockedUsers,
+        favorited_chats: options.favoritedChats,
+      }),
+    });
+    if (response.ok) {
       return;
     }
     throw new Error(
-      `Failed to set account settings. The server responded with ${status}`,
+      `Failed to set account settings. The server responded with ${response.status}`,
     );
   }
 
