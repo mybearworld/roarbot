@@ -146,7 +146,7 @@ export class RichPost implements Post {
     if (!this._bot.token) {
       throw new Error("The bot is not logged in.");
     }
-    if (this._bot.username !== this.username) {
+    if (this._bot.username?.toLowerCase() !== this.username.toLowerCase()) {
       throw new Error("This post is not made by the bot.");
     }
     const status = (
