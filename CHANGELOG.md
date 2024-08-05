@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Post deletion.
+- `updatePost` event on bots that looks for post eidts and other changes.
 
 ### Changed
 

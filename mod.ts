@@ -67,6 +67,7 @@ import {
   LOGIN_SCHEMA,
   API_POST_SCHEMA,
   POST_PACKET_SCHEMA,
+  UPDATE_POST_PACKET_SCHEMA,
   UPLOADS_ATTACHMENT_SCHEMA,
   API_USER_SCHEMA,
   type UploadsAttachment,
@@ -86,6 +87,7 @@ export class RoarBot {
   private _events: { [K in keyof Events]: Events[K][] } = {
     login: [],
     post: [],
+    updatePost: [],
   };
   private _commands: Command[] = [];
   private _username?: string;
@@ -254,6 +256,24 @@ export class RoarBot {
         return;
       }
       this._events.post.forEach((callback) =>
+        callback(
+          (content, options) => {
+            return this.post(content, {
+              replies: [parsed.data.val.post_id],
+              chat: parsed.data.val.post_origin,
+              ...options,
+            });
+          },
+          new RichPost(parsed.data.val, this),
+        ),
+      );
+    });
+    ws.addEventListener("message", ({ data }) => {
+      const parsed = UPDATE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      if (!parsed.success) {
+        return;
+      }
+      this._events.updatePost.forEach((callback) =>
         callback(
           (content, options) => {
             return this.post(content, {
@@ -562,6 +582,13 @@ export class RoarBot {
 export type Events = {
   login: (token: string) => void;
   post: (
+    reply: (
+      content: string,
+      options?: Omit<PostOptions, "replies" | "chat">,
+    ) => Promise<RichPost>,
+    post: RichPost,
+  ) => void;
+  updatePost: (
     reply: (
       content: string,
       options?: Omit<PostOptions, "replies" | "chat">,
