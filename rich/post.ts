@@ -3,7 +3,7 @@
 // yes i want to do something about it but i cant
 // - mbw
 
-import type { Post, RoarBot } from "../mod.ts";
+import type { Post, PostOptions, RoarBot } from "../mod.ts";
 import type { Attachment } from "../types.ts";
 
 export class RichPost implements Post {
@@ -158,5 +158,21 @@ export class RichPost implements Post {
         `Couldn't delete post. The API returned ${response.status}`,
       );
     }
+  }
+
+  /**
+   * Replies to this post.
+   * @param content The content of the reply.
+   * @param options More parameters of the post. See {@link PostOptions} for
+   * details. Note that you cannot specify `replies` or `chat`.
+   * @returns The new reply.
+   * @throws When {@link RoarBot.prototype.post} throws.
+   */
+  reply(content: string, options?: Omit<PostOptions, "replies" | "chat">): Promise<RichPost> {
+    return this._bot.post(content, {
+      replies: [this.id],
+      chat: this.origin,
+      ...options,
+    });
   }
 }

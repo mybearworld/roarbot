@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Replaced the `Post` type with a `RichPost` class. (The `Post` type is still available.)
+- Post deletion/replying using the `RichPost` class.
 - More idiomatic keys on posts (camelCase instead of snake_case, no single letter keys).
 
 ### Deprecated

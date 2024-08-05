@@ -255,36 +255,20 @@ export class RoarBot {
       if (!parsed.success) {
         return;
       }
-      this._events.post.forEach((callback) =>
-        callback(
-          (content, options) => {
-            return this.post(content, {
-              replies: [parsed.data.val.post_id],
-              chat: parsed.data.val.post_origin,
-              ...options,
-            });
-          },
-          new RichPost(parsed.data.val, this),
-        ),
-      );
+      this._events.post.forEach((callback) => {
+        const post = new RichPost(parsed.data.val, this);
+        callback(post.reply.bind(post), post);
+      });
     });
     ws.addEventListener("message", ({ data }) => {
       const parsed = UPDATE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
         return;
       }
-      this._events.updatePost.forEach((callback) =>
-        callback(
-          (content, options) => {
-            return this.post(content, {
-              replies: [parsed.data.val.post_id],
-              chat: parsed.data.val.post_origin,
-              ...options,
-            });
-          },
-          new RichPost(parsed.data.val, this),
-        ),
-      );
+      this._events.updatePost.forEach((callback) => {
+        const post = new RichPost(parsed.data.val, this);
+        callback(post.reply.bind(post), post);
+      });
     });
     ws.addEventListener("close", (ev) => {
       console.log("Connection closed.", ev);
@@ -581,20 +565,8 @@ export class RoarBot {
  */
 export type Events = {
   login: (token: string) => void;
-  post: (
-    reply: (
-      content: string,
-      options?: Omit<PostOptions, "replies" | "chat">,
-    ) => Promise<RichPost>,
-    post: RichPost,
-  ) => void;
-  updatePost: (
-    reply: (
-      content: string,
-      options?: Omit<PostOptions, "replies" | "chat">,
-    ) => Promise<RichPost>,
-    post: RichPost,
-  ) => void;
+  post: (reply: RichPost["reply"], post: RichPost) => void;
+  updatePost: (reply: RichPost["reply"], post: RichPost) => void;
 };
 
 /** Options that can be passed into {@link RoarBot}. */
@@ -659,10 +631,7 @@ export type CommandOptions<TPattern extends Pattern> = {
   admin?: boolean;
   /** The callback to be called when the command gets executed. */
   fn: (
-    reply: (
-      content: string,
-      options?: Omit<PostOptions, "replies" | "chat">,
-    ) => Promise<RichPost>,
+    reply: RichPost["reply"],
     args: ResolvePattern<TPattern>,
     post: RichPost,
   ) => void | Promise<void>;
