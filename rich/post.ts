@@ -135,4 +135,28 @@ export class RichPost implements Post {
   toJSON() {
     return { ...this, _bot: undefined };
   }
+
+  /**
+   * Deletes this post.
+   * @throws If the bot isn't logged in.
+   * @throws If the post isn't owned by the bot.
+   * @throws If the API returns an error.
+   */
+  async delete() {
+    if (!this._bot.token) {
+      throw new Error("The bot is not logged in.");
+    }
+    if (this._bot.username !== this.username) {
+      throw new Error("This post is not made by the bot.");
+    }
+    const status = (
+      await fetch(`https://api.meower.org/posts?id=${this.id}`, {
+        method: "DELETE",
+        headers: { Token: this._bot.token },
+      })
+    ).status;
+    if (status !== 200) {
+      throw new Error(`Couldn't delete post. The API returned ${status}`);
+    }
+  }
 }
