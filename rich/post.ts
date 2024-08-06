@@ -7,47 +7,50 @@ import type { Post, PostOptions, RoarBot } from "../mod.ts";
 import type { Attachment } from "../types.ts";
 
 export class RichPost implements Post {
+  private _events: { [K in keyof RichPostEvents]: RichPostEvents[K][] } = {
+    update: [],
+  };
   /** The attachments the post has. */
-  attachments: Attachment[];
+  attachments!: Attachment[];
   /**
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichPost.prototype.editedAt} instead.
    */
   edited_at?: number;
   /** Whether the post is deleted or not. */
-  isDeleted: boolean;
+  isDeleted!: boolean;
   /**
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichPost.prototype.content} instead.
    */
-  p: string;
+  p!: string;
   /**
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichPost.prototype.id} instead.
    */
-  post_id: string;
+  post_id!: string;
   /**
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichPost.prototype.origin} instead.
    */
-  post_origin: string;
+  post_origin!: string;
   /**
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichPost.prototype.createdAt} instead.
    */
-  t: { e: number };
+  t!: { e: number };
   /**
    * @deprecated Only included for backwards compatibility. Check for whether
    * {@link RichPost.prototype.origin} is `inbox` instead.
    */
-  type: number;
+  type!: number;
   /**
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichPost.prototype.username} instead.
    */
-  u: string;
+  u!: string;
   /** The reactions the post got. */
-  reactions: {
+  reactions!: {
     /** The amount of times this emoji was reacted. */
     count: number;
     /** The emoji that was reacted with. */
@@ -64,11 +67,21 @@ export class RichPost implements Post {
    * @deprecated Only included for backwards compatibility. Use
    * {@link RichBot.prototype.replyTo} instead.
    */
-  reply_to: (RichPost | null)[];
+  reply_to!: (RichPost | null)[];
   private _bot: RoarBot;
 
   constructor(post: Post, bot: RoarBot) {
     this._bot = bot;
+    this._applyPost(post);
+    this._bot.on("updatePost", (_reply, post) => {
+      if (post.id === this.id) {
+        this._applyPost(post);
+        this._events.update.forEach((callback) => callback());
+      }
+    });
+  }
+
+  private _applyPost(post: Post) {
     this.attachments = post.attachments;
     this.edited_at = post.edited_at;
     this.isDeleted = post.isDeleted;
@@ -83,7 +96,7 @@ export class RichPost implements Post {
       userReacted: reaction.user_reacted,
     }));
     this.reply_to = post.reply_to.map((post) =>
-      !post ? post : new RichPost(post, bot),
+      !post ? post : new RichPost(post, this._bot),
     );
   }
 
@@ -137,6 +150,22 @@ export class RichPost implements Post {
   }
 
   /**
+   * Listen to an event that occurs.
+   * @param event The event to listen for.
+   * @param callback The callback to execute when the event fires.
+   * @example
+   * ```ts
+   * post.on("update", () => console.log(post.content));
+   * ```
+   */
+  on<TEvent extends keyof RichPostEvents>(
+    event: TEvent,
+    callback: RichPostEvents[TEvent],
+  ) {
+    this._events[event].push(callback);
+  }
+
+  /**
    * Deletes this post.
    * @throws If the bot isn't logged in.
    * @throws If the post isn't owned by the bot.
@@ -168,7 +197,10 @@ export class RichPost implements Post {
    * @returns The new reply.
    * @throws When {@link RoarBot.prototype.post} throws.
    */
-  reply(content: string, options?: Omit<PostOptions, "replies" | "chat">): Promise<RichPost> {
+  reply(
+    content: string,
+    options?: Omit<PostOptions, "replies" | "chat">,
+  ): Promise<RichPost> {
     return this._bot.post(content, {
       replies: [this.id],
       chat: this.origin,
@@ -176,3 +208,9 @@ export class RichPost implements Post {
     });
   }
 }
+/**
+ * A mapping of `RichPosts` event to their respective callbacks.
+ */
+export type RichPostEvents = {
+  update: () => void;
+};
