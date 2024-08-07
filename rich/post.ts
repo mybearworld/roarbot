@@ -9,6 +9,7 @@ import type { Attachment } from "../types.ts";
 export class RichPost implements Post {
   private _events: { [K in keyof RichPostEvents]: RichPostEvents[K][] } = {
     update: [],
+    delete: [],
   };
   /** The attachments the post has. */
   attachments!: Attachment[];
@@ -77,6 +78,12 @@ export class RichPost implements Post {
       if (post.id === this.id) {
         this._applyPost(post);
         this._events.update.forEach((callback) => callback());
+      }
+    });
+    this._bot.on("deletePost", (id) => {
+      if (id === this.id) {
+        this.isDeleted = true;
+        this._events.delete.forEach((callback) => callback());
       }
     });
   }
@@ -213,4 +220,5 @@ export class RichPost implements Post {
  */
 export type RichPostEvents = {
   update: () => void;
+  delete: () => void;
 };

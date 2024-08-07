@@ -79,8 +79,14 @@ export const POST_PACKET_SCHEMA = z.object({
 
 export const UPDATE_POST_PACKET_SCHEMA = z.object({
   cmd: z.literal("update_post"),
-  val: POST_SCHEMA
-})
+  val: POST_SCHEMA,
+});
+export const DELETE_POST_PACKET_SCHEMA = z.object({
+  cmd: z.literal("delete_post"),
+  val: z.object({
+    post_id: z.string()
+  }),
+});
 
 /** An attachment as returned from the uploading API. */
 export type UploadsAttachment = {

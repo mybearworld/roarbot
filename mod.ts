@@ -68,6 +68,7 @@ import {
   API_POST_SCHEMA,
   POST_PACKET_SCHEMA,
   UPDATE_POST_PACKET_SCHEMA,
+  DELETE_POST_PACKET_SCHEMA,
   UPLOADS_ATTACHMENT_SCHEMA,
   API_USER_SCHEMA,
   type UploadsAttachment,
@@ -99,6 +100,7 @@ export class RoarBot {
     login: [],
     post: [],
     updatePost: [],
+    deletePost: [],
   };
   private _commands: Command[] = [];
   private _username?: string;
@@ -312,6 +314,15 @@ export class RoarBot {
         const post = new RichPost(parsed.data.val, this);
         callback(post.reply.bind(post), post);
       });
+    });
+    ws.addEventListener("message", ({ data }) => {
+      const parsed = DELETE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      if (!parsed.success) {
+        return;
+      }
+      this._events.deletePost.forEach((callback) =>
+        callback(parsed.data.val.post_id),
+      );
     });
     ws.addEventListener("close", (ev) => {
       this._log("error", "Connection closed.", ev);
@@ -637,6 +648,7 @@ export type Events = {
   login: (token: string) => void;
   post: (reply: RichPost["reply"], post: RichPost) => void;
   updatePost: (reply: RichPost["reply"], post: RichPost) => void;
+  deletePost: (id: string) => void;
 };
 
 /** Options that can be passed into {@link RoarBot}. */
