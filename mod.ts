@@ -497,6 +497,7 @@ export class RoarBot {
       pattern: options.args,
       admin: options.admin ?? false,
     });
+    this._log("success", `Registered command ${JSON.stringify(name)}.`);
     this.on("post", async (reply, post) => {
       if (post.username === this.username) {
         return;
