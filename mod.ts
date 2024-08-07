@@ -108,7 +108,7 @@ export class RoarBot {
   private _ws?: WebSocket;
   private _messages: Messages;
   private _foundUpdate = false;
-  private _shouldLog: boolean;
+  private _loggingLevel: LoggingLevel;
 
   /**
    * Create a bot.
@@ -117,7 +117,7 @@ export class RoarBot {
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
     this._banned = options?.banned ?? [];
-    this._shouldLog = options?.log ?? true;
+    this._loggingLevel = options?.loggingLevel ?? "base";
     this._messages = {
       noCommand: (command) => `The command ${command} doesn't exist!`,
       helpDescription: "Shows this message.",
@@ -196,15 +196,18 @@ export class RoarBot {
   }
 
   private _log(
-    level: "info" | "error" | "success",
+    level: "ws" | "info" | "error" | "success",
     msg: string,
     // deno-lint-ignore no-explicit-any -- console.log uses `any[]` as well
     ...other: any[]
   ) {
-    if (this._shouldLog) {
+    if (
+      this._loggingLevel !== "none" &&
+      !(level === "ws" && this._loggingLevel !== "ws")
+    ) {
       console.log(
         `\x1b[1;90m[${logTimeFormat.format(Date.now())}]\x1b[1;0m`,
-        (level === "info" ? "\x1b[1;90m"
+        (level === "info" || level === "ws" ? "\x1b[1;90m"
         : level === "error" ? "\x1b[1;31m"
         : "\x1b[1;36m") + msg,
         ...other,
@@ -276,6 +279,9 @@ export class RoarBot {
       `https://server.meower.org?v=1&token=${response.token}`,
     );
     this._ws = ws;
+    ws.addEventListener("message", ({ data }) => {
+      this._log("ws", data);
+    });
     ws.addEventListener("message", ({ data }) => {
       const parsed = AUTH_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
@@ -651,8 +657,16 @@ export type RoarBotOptions = {
    */
   messages?: Partial<Messages>;
   /** Whether to log messages to the console. */
-  log?: boolean;
+  loggingLevel?: LoggingLevel;
 };
+
+/**
+ * How much logging the bot should do. By default, this is `"base"`.
+ * - `none`: No logging at all
+ * - `base`: Logging of most things.
+ * - `ws`: Same as `base`, but also logs packets from the server.
+ */
+export type LoggingLevel = "none" | "base" | "ws";
 
 /**
  * Different messgaes the bot might send. Each of them has a default that will
