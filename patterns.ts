@@ -153,7 +153,7 @@ export const parseArgs = <const TPattern extends Pattern>(
  * Turns the pattern type into a human readable format.
  * @param patternType The pattern type.
  */
-export const stringifyPatternType = (patternType: PatternType) => {
+export const stringifyPatternType = (patternType: PatternType): string => {
   return (
     typeof patternType === "string" ?
       patternType === "full" ?

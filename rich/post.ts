@@ -145,18 +145,6 @@ export class RichPost implements Post {
   }
 
   /**
-   * The representation of the post with only its basic properties, notably
-   * without the bot token.
-   * @example
-   * ```js
-   * JSON.stringify(post)
-   * ```
-   */
-  toJSON() {
-    return { ...this, _bot: undefined };
-  }
-
-  /**
    * Listen to an event that occurs.
    * @param event The event to listen for.
    * @param callback The callback to execute when the event fires.
