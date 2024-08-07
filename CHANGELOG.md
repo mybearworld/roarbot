@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Post deletion.
 - `updatePost` event on bots that looks for post eidts and other changes.
 - `stringifyPatternType` function to turn a pattern type into a human readable format.
+- More thorough and disablable logging.
 
 ### Changed
 

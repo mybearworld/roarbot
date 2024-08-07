@@ -86,6 +86,10 @@ export * from "./rich/post.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
 const version = "1.5.3";
+const logTimeFormat = new Intl.DateTimeFormat("en-US", {
+  timeStyle: "medium",
+  hour12: false,
+});
 
 /**
  * A bot connecting to Meower.
@@ -104,6 +108,7 @@ export class RoarBot {
   private _ws?: WebSocket;
   private _messages: Messages;
   private _foundUpdate = false;
+  private _shouldLog: boolean;
 
   /**
    * Create a bot.
@@ -112,6 +117,7 @@ export class RoarBot {
   constructor(options?: RoarBotOptions) {
     this._admins = options?.admins ?? [];
     this._banned = options?.banned ?? [];
+    this._shouldLog = options?.log ?? true;
     this._messages = {
       noCommand: (command) => `The command ${command} doesn't exist!`,
       helpDescription: "Shows this message.",
@@ -189,10 +195,29 @@ export class RoarBot {
     });
   }
 
+  private _log(
+    level: "info" | "error" | "success",
+    msg: string,
+    // deno-lint-ignore no-explicit-any -- console.log uses `any[]` as well
+    ...other: any[]
+  ) {
+    if (this._shouldLog) {
+      console.log(
+        `\x1b[1;90m[${logTimeFormat.format(Date.now())}]\x1b[1;0m`,
+        (level === "info" ? "\x1b[1;90m"
+        : level === "error" ? "\x1b[1;31m"
+        : "\x1b[1;36m") + msg,
+        ...other,
+        "\x1b[0m",
+      );
+    }
+  }
+
   private async _checkForUpdates() {
     if (this._foundUpdate) {
       return;
     }
+    this._log("info", "Checking for RoarBot updates...");
     try {
       const response = JSR_UPDATE.parse(
         await (await fetch("https://jsr.io/@mbw/roarbot/meta.json")).json(),
@@ -204,7 +229,8 @@ export class RoarBot {
       }
       this._foundUpdate = true;
     } catch {
-      console.error(
+      this._log(
+        "error",
         "Failed to check for RoarBot updates. Ensure that you're on a recent version!",
       );
     }
@@ -226,6 +252,7 @@ export class RoarBot {
    * > but in an environment variable.
    */
   async login(username: string, password: string) {
+    this._log("info", `Trying to log into ${username}...`);
     if (this._token) {
       throw new Error("This bot is already logged in.");
     }
@@ -243,6 +270,8 @@ export class RoarBot {
         `Couldn't log in: ${response.type}. Ensure that you have the correct password!`,
       );
     }
+    this._log("success", "Recieved initial token.");
+    this._log("info", "Connecting to Meower...");
     const ws = new WebSocket(
       `https://server.meower.org?v=1&token=${response.token}`,
     );
@@ -253,6 +282,7 @@ export class RoarBot {
         return;
       }
       const token = parsed.data.val.token;
+      this._log("success", "Recieved token. Logged in successfully!");
       this._username = username;
       this._token = token;
       this._events.login.forEach((callback) => callback(token));
@@ -278,7 +308,7 @@ export class RoarBot {
       });
     });
     ws.addEventListener("close", (ev) => {
-      console.log("Connection closed.", ev);
+      this._log("error", "Connection closed.", ev);
     });
   }
 
@@ -461,32 +491,59 @@ export class RoarBot {
       ) {
         return;
       }
-      if (this._banned.includes(post.u)) {
-        reply(this._messages.banned);
-        return;
-      }
-      if (options.admin && !this._admins.includes(post.u)) {
-        reply(this._messages.adminLocked);
-        return;
-      }
-      const parsed = parseArgs(options.args, split.slice(2), this._messages);
+      const commandName = `${JSON.stringify(post.content)} by ${post.username} in ${post.origin}`;
+      this._log("info", `Running ${commandName}...`);
       const handleError = async (fn: () => void | Promise<void>) => {
         try {
           await fn();
         } catch (e) {
-          console.error(e);
+          this._log(
+            "error",
+            `Couldn't run ${commandName} because an error occured.`,
+            e,
+          );
           try {
             await reply(this._messages.error);
           } catch (f) {
-            console.error("Another error occured trying to send the error.", f);
+            this._log(
+              "error",
+              "Another error occured trying to send the error.",
+              f,
+            );
           }
         }
       };
+      handleError(async () => {
+        if (this._banned.includes(post.username)) {
+          this._log(
+            "error",
+            `Refused running ${commandName} as the user is banned.`,
+          );
+          await reply(this._messages.banned);
+          return;
+        }
+      });
+      handleError(async () => {
+        if (options.admin && !this._admins.includes(post.u)) {
+          this._log(
+            "error",
+            `Refused running ${commandName} as the user is not an admin.`,
+          );
+          await reply(this._messages.adminLocked);
+          return;
+        }
+      });
+      const parsed = parseArgs(options.args, split.slice(2), this._messages);
       await handleError(async () => {
         if (parsed.error) {
+          this._log(
+            "error",
+            `Couldn't run ${commandName} because ${parsed.message}`,
+          );
           await reply(parsed.message);
         } else {
           await options.fn(reply, parsed.parsed, post);
+          this._log("success", `Successfully ran ${commandName}.`);
         }
       });
     });
@@ -593,6 +650,8 @@ export type RoarBotOptions = {
    * will be used if none are provided here.
    */
   messages?: Partial<Messages>;
+  /** Whether to log messages to the console. */
+  log?: boolean;
 };
 
 /**
