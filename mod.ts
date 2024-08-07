@@ -498,10 +498,10 @@ export class RoarBot {
       admin: options.admin ?? false,
     });
     this.on("post", async (reply, post) => {
-      if (post.u === this.username) {
+      if (post.username === this.username) {
         return;
       }
-      const split = post.p.split(" ");
+      const split = post.content.split(" ");
       if (
         split[0].toLowerCase() !== `@${this.username}`.toLowerCase() ||
         split[1] !== name
@@ -541,7 +541,7 @@ export class RoarBot {
         }
       });
       handleError(async () => {
-        if (options.admin && !this._admins.includes(post.u)) {
+        if (options.admin && !this._admins.includes(post.username)) {
           this._log(
             "error",
             `Refused running ${commandName} as the user is not an admin.`,
