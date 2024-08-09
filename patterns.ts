@@ -1,4 +1,4 @@
-import type { Messages } from "./mod.ts";
+import type { Messages } from "./mod.ts";
 
 /**
  * Possible types of patterns to a command.
@@ -7,7 +7,7 @@ import type { Messages } from "./mod.ts";
  * - `"full"`: A string that matches until the end of the command.
  * - `string[]`: One of the specified strings
  */
-export type PatternType = "string" | "number" | "full" | string[];
+export type PatternType = "string" | "number" | "full" | string[];
 
 /**
  * A list of arguments types. This is a list of objects formatted like this:
@@ -43,8 +43,8 @@ export type PatternType = "string" | "number" | "full" | string[];
  */
 export type Pattern = (
   | PatternType
-  | { type: PatternType; name?: string; optional?: boolean }
-)[];
+  | { type: PatternType; name?: string; optional?: boolean }
+)[];
 
 /**
  * Converts the passed in `TPattern` to its corresponding TypeScript type.
@@ -57,45 +57,45 @@ export type ResolvePattern<TPattern extends Pattern> = {
         ResolvePatternType<TPattern[K]["type"]> | undefined
       : ResolvePatternType<TPattern[K]["type"]>
     : never
-  : TPattern[K];
-};
+  : TPattern[K];
+};
 type ResolvePatternType<TArgument extends PatternType> =
   TArgument extends "string" ? string
   : TArgument extends "number" ? number
   : TArgument extends "full" ? string
   : TArgument extends string[] ? TArgument[number]
-  : never;
+  : never;
 
 export const parseArgs = <const TPattern extends Pattern>(
   pattern: TPattern,
   args: string[],
   messages: Messages,
 ):
-  | { error: true; message: string }
-  | { error: false; parsed: ResolvePattern<TPattern> } => {
-  const parsed = [];
-  let hadOptionals = false;
-  let hadFull = false;
+  | { error: true; message: string }
+  | { error: false; parsed: ResolvePattern<TPattern> } => {
+  const parsed = [];
+  let hadOptionals = false;
+  let hadFull = false;
   for (const [i, slice] of pattern.entries()) {
-    const isObject = typeof slice === "object" && "type" in slice;
-    const type = isObject ? slice.type : slice;
-    const optional = isObject && !!slice.optional;
+    const isObject = typeof slice === "object" && "type" in slice;
+    const type = isObject ? slice.type : slice;
+    const optional = isObject && !!slice.optional;
     if (hadOptionals && !optional) {
       return {
         error: true,
         message:
           "In this command's pattern, there is an optional argument following a non-optional one.\nThis is an issue with the bot, not your command.",
-      };
+      };
     }
-    hadOptionals ||= optional;
-    const name = isObject && !!slice.name;
-    const repr = name ? `${slice.name} (${type})` : `${type}`;
-    const current = args[i];
+    hadOptionals ||= optional;
+    const name = isObject && !!slice.name;
+    const repr = name ? `${slice.name} (${type})` : `${type}`;
+    const current = args[i];
     if (!current) {
       if (optional) {
-        continue;
+        continue;
       } else if (type !== "full") {
-        return { error: true, message: messages.argsMissing(repr) };
+        return { error: true, message: messages.argsMissing(repr) };
       }
     }
     if (Array.isArray(type)) {
@@ -106,26 +106,26 @@ export const parseArgs = <const TPattern extends Pattern>(
             JSON.stringify(current),
             type.map((t) => JSON.stringify(t)).join(", "),
           ),
-        };
+        };
       }
-      parsed.push(current);
-      continue;
+      parsed.push(current);
+      continue;
     }
     switch (type) {
       case "string": {
-        parsed.push(current);
-        break;
+        parsed.push(current);
+        break;
       }
       case "number": {
-        const number = Number(current);
+        const number = Number(current);
         if (Number.isNaN(number)) {
           return {
             error: true,
             message: messages.argNan(JSON.stringify(current)),
-          };
+          };
         }
-        parsed.push(number);
-        break;
+        parsed.push(number);
+        break;
       }
       case "full": {
         if (pattern[i + 1]) {
@@ -133,21 +133,21 @@ export const parseArgs = <const TPattern extends Pattern>(
             error: true,
             message:
               "In this command's pattern, there is an argument following a `full` argument.\nThis is an issue with the bot, not your command.",
-          };
+          };
         }
-        hadFull = true;
-        parsed.push(args.slice(i).join(" "));
-        break;
+        hadFull = true;
+        parsed.push(args.slice(i).join(" "));
+        break;
       }
       default:
-        (type) satisfies never;
+        (type) satisfies never;
     }
   }
   if (!hadFull && args.length !== parsed.length) {
-    return { error: true, message: messages.tooManyArgs };
+    return { error: true, message: messages.tooManyArgs };
   }
-  return { error: false, parsed: parsed as ResolvePattern<TPattern> };
-};
+  return { error: false, parsed: parsed as ResolvePattern<TPattern> };
+};
 
 /**
  * Turns the pattern type into a human readable format.
@@ -160,5 +160,5 @@ export const stringifyPatternType = (patternType: PatternType): string => {
         "full string"
       : patternType
     : patternType.map((option) => JSON.stringify(option)).join(" | ")
-  );
-};
+  );
+};

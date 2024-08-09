@@ -7,7 +7,7 @@
  * > potential errors to not make your bot crash.
  *
  * ```ts
- * const bot = new RoarBot();
+ * const bot = new RoarBot();
  * bot.command("greet", {
  *   description: "Greet someone!",
  *   args: [
@@ -15,10 +15,10 @@
  *     { name: "greeting", type: "full" },
  *   ],
  *   fn: async (reply, [whom, greeting]) => {
- *     await reply(`${greeting || "Hello"}, ${whom}!`);
+ *     await reply(`${greeting || "Hello"}, ${whom}!`);
  *   },
- * });
- * bot.login("BearBot", "········");
+ * });
+ * bot.login("BearBot", "········");
  *
  * // @BearBot help
  * // @BearBot greet Josh
@@ -26,36 +26,36 @@
  * ```
  *
  * ```ts
- * const bot = new RoarBot();
+ * const bot = new RoarBot();
  * bot.run(
  *   import("./commands/add.ts"),
  *   import("./commands/ping.ts"),
- * );
- * bot.login("BearBot", "········");
+ * );
+ * bot.login("BearBot", "········");
  *
  * // ==== ./commands/add.ts ====
- * import type { RoarBot } from "../mod.ts";
+ * import type { RoarBot } from "../mod.ts";
  *
  * export default (bot: RoarBot) => {
  *   bot.command("add", {
  *     args: ["number", "number"],
  *     fn: async (reply, [n1, n2]) => {
- *       await reply((n1 + n2).toString());
+ *       await reply((n1 + n2).toString());
  *     },
- *   });
- * };
+ *   });
+ * };
  *
  * // ==== ./commands/ping.ts ====
- * import type { RoarBot } from "../mod.ts";
+ * import type { RoarBot } from "../mod.ts";
  *
  * export default (bot: RoarBot) => {
  *   bot.command("ping", {
  *     args: [],
  *     fn: async (reply) => {
- *       await reply("Pong");
+ *       await reply("Pong");
  *     },
- *   });
- * };
+ *   });
+ * };
  * ```
  *
  * @module
@@ -73,24 +73,24 @@ import {
   API_USER_SCHEMA,
   type UploadsAttachment,
   type User,
-} from "./types.ts";
+} from "./types.ts";
 import {
   type Pattern,
   type ResolvePattern,
   parseArgs,
   stringifyPatternType,
-} from "./patterns.ts";
-import { RichPost } from "./rich/post.ts";
-export type { Post, UploadsAttachment, Attachment, User } from "./types.ts";
-export * from "./patterns.ts";
-export * from "./rich/post.ts";
+} from "./patterns.ts";
+import { RichPost } from "./rich/post.ts";
+export type { Post, UploadsAttachment, Attachment, User } from "./types.ts";
+export * from "./patterns.ts";
+export * from "./rich/post.ts";
 
-const ATTACMHENT_MAX_SIZE = 25 << 20;
-const version = "1.6.0";
+const ATTACMHENT_MAX_SIZE = 25 << 20;
+const version = "1.6.0";
 const logTimeFormat = new Intl.DateTimeFormat("en-US", {
   timeStyle: "medium",
   hour12: false,
-});
+});
 
 /**
  * A bot connecting to Meower.
@@ -101,25 +101,25 @@ export class RoarBot {
     post: [],
     updatePost: [],
     deletePost: [],
-  };
-  private _commands: Command[] = [];
-  private _username?: string;
-  private _token?: string;
-  private _admins: string[];
-  private _banned: string[];
-  private _ws?: WebSocket;
-  private _messages: Messages;
-  private _foundUpdate = false;
-  private _loggingLevel: LoggingLevel;
+  };
+  private _commands: Command[] = [];
+  private _username?: string;
+  private _token?: string;
+  private _admins: string[];
+  private _banned: string[];
+  private _ws?: WebSocket;
+  private _messages: Messages;
+  private _foundUpdate = false;
+  private _loggingLevel: LoggingLevel;
 
   /**
    * Create a bot.
    * @param options Some options. See {@link RoarBotOptions} for more details.
    */
   constructor(options?: RoarBotOptions) {
-    this._admins = options?.admins ?? [];
-    this._banned = options?.banned ?? [];
-    this._loggingLevel = options?.loggingLevel ?? "base";
+    this._admins = options?.admins ?? [];
+    this._banned = options?.banned ?? [];
+    this._loggingLevel = options?.loggingLevel ?? "base";
     this._messages = {
       noCommand: (command) => `The command ${command} doesn't exist!`,
       helpDescription: "Shows this message.",
@@ -134,26 +134,26 @@ export class RoarBot {
       argNan: (string) => `${string} is not a number.`,
       tooManyArgs: "You have too many arguments.",
       ...options?.messages,
-    };
-    this._checkForUpdates();
+    };
+    this._checkForUpdates();
     setInterval(
       () => {
-        this._checkForUpdates();
+        this._checkForUpdates();
       },
       1000 * 60 * 60,
-    );
+    );
     this.on("post", (reply, post) => {
-      const split = post.p.split(" ");
+      const split = post.p.split(" ");
       if (
         split[0].toLowerCase() === `@${this._username}`.toLowerCase() &&
         split[1] &&
         !this._commands.find((command) => command.name === split[1])
       ) {
-        reply(this._messages.noCommand(JSON.stringify(split[1])));
+        reply(this._messages.noCommand(JSON.stringify(split[1])));
       }
-    });
+    });
     if (!(options?.help ?? true)) {
-      return;
+      return;
     }
     this.command("help", {
       description: "Shows this message.",
@@ -181,20 +181,20 @@ export class RoarBot {
                         (patternType.optional ? "]" : ">")
                       : `(${stringifyPatternType(patternType)})`,
                     )
-                    .join(" ");
+                    .join(" ");
                   return (
                     (command.admin ? "🔒 " : "") +
                     `@${this.username} ${command.name} ${pattern}` +
                     (command.description ? `\n_${command.description}_` : "") +
                     "\n"
-                  );
+                  );
                 })
                 .join("\n"),
           )
-          .join("\n");
-        await reply(`${this._messages.helpCommands}\n${commands}`);
+          .join("\n");
+        await reply(`${this._messages.helpCommands}\n${commands}`);
       },
-    });
+    });
   }
 
   private _log(
@@ -208,36 +208,36 @@ export class RoarBot {
       !(level === "ws" && this._loggingLevel !== "ws")
     ) {
       console.log(
-        `\x1b[1;90m[${logTimeFormat.format(Date.now())}]\x1b[1;0m`,
-        (level === "info" || level === "ws" ? "\x1b[1;90m"
-        : level === "error" ? "\x1b[1;31m"
-        : "\x1b[1;36m") + msg,
+        `\x1b[1;90m[${logTimeFormat.format(Date.now())}]\x1b[1;0m`,
+        (level === "info" || level === "ws" ? "\x1b[1;90m"
+        : level === "error" ? "\x1b[1;31m"
+        : "\x1b[1;36m") + msg,
         ...other,
         "\x1b[0m",
-      );
+      );
     }
   }
 
   private async _checkForUpdates() {
     if (this._foundUpdate) {
-      return;
+      return;
     }
-    this._log("info", "Checking for RoarBot updates...");
+    this._log("info", "Checking for RoarBot updates...");
     try {
       const response = JSR_UPDATE.parse(
         await (await fetch("https://jsr.io/@mbw/roarbot/meta.json")).json(),
-      );
+      );
       if (version !== response.latest) {
         console.log(
           `A new RoarBot version is available! ${version} → ${response.latest}\nSee the changelog for the changes: https://github.com/mybearworld/roarbot/blob/main/CHANGELOG.md`,
-        );
+        );
       }
-      this._foundUpdate = true;
+      this._foundUpdate = true;
     } catch {
       this._log(
         "error",
         "Failed to check for RoarBot updates. Ensure that you're on a recent version!",
-      );
+      );
     }
   }
 
@@ -249,17 +249,17 @@ export class RoarBot {
    * @throws When the bot is already logged in.
    * @example
    * ```js
-   * const bot = new RoarBot();
-   * bot.login("BearBot", "12345678");
+   * const bot = new RoarBot();
+   * bot.login("BearBot", "12345678");
    * ```
    * > [!NOTE]
    * > In a real scenario, the password should not be in plain text like this,
    * > but in an environment variable.
    */
   async login(username: string, password: string) {
-    this._log("info", `Trying to log into ${username}...`);
+    this._log("info", `Trying to log into ${username}...`);
     if (this._token) {
-      throw new Error("This bot is already logged in.");
+      throw new Error("This bot is already logged in.");
     }
     const response = LOGIN_SCHEMA.parse(
       await (
@@ -269,64 +269,64 @@ export class RoarBot {
           body: JSON.stringify({ username, password }),
         })
       ).json(),
-    );
+    );
     if (response.error) {
       throw new Error(
         `Couldn't log in: ${response.type}. Ensure that you have the correct password!`,
-      );
+      );
     }
-    this._log("success", "Recieved initial token.");
-    this._log("info", "Connecting to Meower...");
+    this._log("success", "Recieved initial token.");
+    this._log("info", "Connecting to Meower...");
     const ws = new WebSocket(
       `https://server.meower.org?v=1&token=${response.token}`,
-    );
-    this._ws = ws;
+    );
+    this._ws = ws;
     ws.addEventListener("message", ({ data }) => {
-      this._log("ws", data);
-    });
+      this._log("ws", data);
+    });
     ws.addEventListener("message", ({ data }) => {
-      const parsed = AUTH_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      const parsed = AUTH_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
-        return;
+        return;
       }
-      const token = parsed.data.val.token;
-      this._log("success", "Recieved token. Logged in successfully!");
-      this._username = username;
-      this._token = token;
-      this._events.login.forEach((callback) => callback(token));
-    });
+      const token = parsed.data.val.token;
+      this._log("success", "Recieved token. Logged in successfully!");
+      this._username = username;
+      this._token = token;
+      this._events.login.forEach((callback) => callback(token));
+    });
     ws.addEventListener("message", ({ data }) => {
-      const parsed = POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      const parsed = POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
-        return;
+        return;
       }
       this._events.post.forEach((callback) => {
-        const post = new RichPost(parsed.data.val, this);
-        callback(post.reply.bind(post), post);
-      });
-    });
+        const post = new RichPost(parsed.data.val, this);
+        callback(post.reply.bind(post), post);
+      });
+    });
     ws.addEventListener("message", ({ data }) => {
-      const parsed = UPDATE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      const parsed = UPDATE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
-        return;
+        return;
       }
       this._events.updatePost.forEach((callback) => {
-        const post = new RichPost(parsed.data.val, this);
-        callback(post.reply.bind(post), post);
-      });
-    });
+        const post = new RichPost(parsed.data.val, this);
+        callback(post.reply.bind(post), post);
+      });
+    });
     ws.addEventListener("message", ({ data }) => {
-      const parsed = DELETE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
+      const parsed = DELETE_POST_PACKET_SCHEMA.safeParse(JSON.parse(data));
       if (!parsed.success) {
-        return;
+        return;
       }
       this._events.deletePost.forEach((callback) =>
         callback(parsed.data.val.post_id),
-      );
-    });
+      );
+    });
     ws.addEventListener("close", (ev) => {
-      this._log("error", "Connection closed.", ev);
-    });
+      this._log("error", "Connection closed.", ev);
+    });
   }
 
   /**
@@ -335,11 +335,11 @@ export class RoarBot {
    * @param callback The callback to execute when the event fires.
    * @example
    * ```ts
-   * bot.on("login", () => console.log("Hooray!"));
+   * bot.on("login", () => console.log("Hooray!"));
    * ```
    */
   on<TEvent extends keyof Events>(event: TEvent, callback: Events[TEvent]) {
-    this._events[event].push(callback);
+    this._events[event].push(callback);
   }
 
   /**
@@ -355,7 +355,7 @@ export class RoarBot {
    */
   async post(content: string, options?: PostOptions): Promise<RichPost> {
     if (!this._token) {
-      throw new Error("The bot is not logged in.");
+      throw new Error("The bot is not logged in.");
     }
     const response = API_POST_SCHEMA.parse(
       await (
@@ -385,11 +385,11 @@ export class RoarBot {
           },
         )
       ).json(),
-    );
+    );
     if (response.error) {
-      throw new Error(`Couldn't post: ${response.type}`);
+      throw new Error(`Couldn't post: ${response.type}`);
     }
-    return new RichPost(response, this);
+    return new RichPost(response, this);
   }
 
   /**
@@ -405,11 +405,11 @@ export class RoarBot {
           `https://api.meower.org/users/${encodeURIComponent(username)}`,
         )
       ).json(),
-    );
+    );
     if (response.error) {
-      throw new Error(`Couldn't get user. Error: ${response.type}`);
+      throw new Error(`Couldn't get user. Error: ${response.type}`);
     }
-    return response;
+    return response;
   }
 
   /**
@@ -422,15 +422,15 @@ export class RoarBot {
    */
   async upload(file: Blob): Promise<UploadsAttachment> {
     if (!this._token) {
-      throw new Error("The bot is not logged in.");
+      throw new Error("The bot is not logged in.");
     }
     if (file.size > ATTACMHENT_MAX_SIZE) {
       throw new Error(
         `The file is too large. Keep it at or under ${ATTACMHENT_MAX_SIZE}B`,
-      );
+      );
     }
-    const form = new FormData();
-    form.set("file", file);
+    const form = new FormData();
+    form.set("file", file);
     const response = UPLOADS_ATTACHMENT_SCHEMA.parse(
       await (
         await fetch("https://uploads.meower.org/attachments", {
@@ -439,8 +439,8 @@ export class RoarBot {
           headers: { Authorization: this._token },
         })
       ).json(),
-    );
-    return response;
+    );
+    return response;
   }
 
   /**
@@ -451,7 +451,7 @@ export class RoarBot {
    */
   async setAccountSettings(options: SetAccountSettingsOptions) {
     if (!this._token) {
-      throw new Error("The bot is not logged in.");
+      throw new Error("The bot is not logged in.");
     }
     const response = await fetch("https://api.meower.org/me/config", {
       method: "PATCH",
@@ -466,13 +466,13 @@ export class RoarBot {
         hide_blocked_users: options.hideBlockedUsers,
         favorited_chats: options.favoritedChats,
       }),
-    });
+    });
     if (response.ok) {
-      return;
+      return;
     }
     throw new Error(
       `Failed to set account settings. The server responded with ${response.status}`,
-    );
+    );
   }
 
   /**
@@ -488,7 +488,7 @@ export class RoarBot {
     if (this._commands.some((command) => command.name === name)) {
       throw new Error(
         `A command with the name of ${JSON.stringify(name)} already exists.`,
-      );
+      );
     }
     this._commands.push({
       name: name,
@@ -496,75 +496,75 @@ export class RoarBot {
       category: options.category ?? "None",
       pattern: options.args,
       admin: options.admin ?? false,
-    });
-    this._log("success", `Registered command ${JSON.stringify(name)}.`);
+    });
+    this._log("success", `Registered command ${JSON.stringify(name)}.`);
     this.on("post", async (reply, post) => {
       if (post.username === this.username) {
-        return;
+        return;
       }
-      const split = post.content.split(" ");
+      const split = post.content.split(" ");
       if (
         split[0].toLowerCase() !== `@${this.username}`.toLowerCase() ||
         split[1] !== name
       ) {
-        return;
+        return;
       }
-      const commandName = `${JSON.stringify(post.content)} by ${post.username} in ${post.origin}`;
-      this._log("info", `Running ${commandName}...`);
+      const commandName = `${JSON.stringify(post.content)} by ${post.username} in ${post.origin}`;
+      this._log("info", `Running ${commandName}...`);
       const handleError = async (fn: () => void | Promise<void>) => {
         try {
-          await fn();
+          await fn();
         } catch (e) {
           this._log(
             "error",
             `Couldn't run ${commandName} because an error occured.`,
             e,
-          );
+          );
           try {
-            await reply(this._messages.error);
+            await reply(this._messages.error);
           } catch (f) {
             this._log(
               "error",
               "Another error occured trying to send the error.",
               f,
-            );
+            );
           }
         }
-      };
+      };
       handleError(async () => {
         if (this._banned.includes(post.username)) {
           this._log(
             "error",
             `Refused running ${commandName} as the user is banned.`,
-          );
-          await reply(this._messages.banned);
-          return;
+          );
+          await reply(this._messages.banned);
+          return;
         }
-      });
+      });
       handleError(async () => {
         if (options.admin && !this._admins.includes(post.username)) {
           this._log(
             "error",
             `Refused running ${commandName} as the user is not an admin.`,
-          );
-          await reply(this._messages.adminLocked);
-          return;
+          );
+          await reply(this._messages.adminLocked);
+          return;
         }
-      });
-      const parsed = parseArgs(options.args, split.slice(2), this._messages);
+      });
+      const parsed = parseArgs(options.args, split.slice(2), this._messages);
       await handleError(async () => {
         if (parsed.error) {
           this._log(
             "error",
             `Couldn't run ${commandName} because ${parsed.message}`,
-          );
-          await reply(parsed.message);
+          );
+          await reply(parsed.message);
         } else {
-          await options.fn(reply, parsed.parsed, post);
-          this._log("success", `Successfully ran ${commandName}.`);
+          await options.fn(reply, parsed.parsed, post);
+          this._log("success", `Successfully ran ${commandName}.`);
         }
-      });
-    });
+      });
+    });
   }
 
   /**
@@ -575,41 +575,41 @@ export class RoarBot {
    *
    * @example
    * ```ts
-   * const bot = new RoarBot();
+   * const bot = new RoarBot();
    * bot.run(
    *   import("./commands/add.ts"),
    *   import("./commands/ping.ts"),
-   * );
-   * bot.login("BearBot", "········");
+   * );
+   * bot.login("BearBot", "········");
    *
    * // ==== ./commands/add.ts ====
-   * import type { RoarBot } from "../mod.ts";
+   * import type { RoarBot } from "../mod.ts";
    *
    * export default (bot: RoarBot) => {
    *   bot.command("add", {
    *     args: ["number", "number"],
    *     fn: async (reply, [n1, n2]) => {
-   *       await reply((n1 + n2).toString());
+   *       await reply((n1 + n2).toString());
    *     },
-   *   });
-   * };
+   *   });
+   * };
    *
    * // ==== ./commands/ping.ts ====
-   * import type { RoarBot } from "../mod.ts";
+   * import type { RoarBot } from "../mod.ts";
    *
    * export default (bot: RoarBot) => {
    *   bot.command("ping", {
    *     args: [],
    *     fn: async (reply) => {
-   *       await reply("Pong");
+   *       await reply("Pong");
    *     },
-   *   });
-   * };
+   *   });
+   * };
    * ```
    */
   async run(...modules: Promise<{ default: (bot: RoarBot) => void }>[]) {
-    const awaitedModules = await Promise.all(modules);
-    awaitedModules.forEach((module) => module.default(this));
+    const awaitedModules = await Promise.all(modules);
+    awaitedModules.forEach((module) => module.default(this));
   }
 
   /**
@@ -617,7 +617,7 @@ export class RoarBot {
    * in, this is `undefined`.
    */
   get username(): string | undefined {
-    return this._username;
+    return this._username;
   }
 
   /**
@@ -625,12 +625,12 @@ export class RoarBot {
    * in, this is `undefined`.
    */
   get token(): string | undefined {
-    return this._token;
+    return this._token;
   }
 
   /** The used commands. */
   get commands(): Command[] {
-    return [...this._commands];
+    return [...this._commands];
   }
 
   /**
@@ -638,7 +638,7 @@ export class RoarBot {
    * logged in.
    */
   get ws(): WebSocket | undefined {
-    return this._ws;
+    return this._ws;
   }
 }
 
@@ -646,32 +646,32 @@ export class RoarBot {
  * A mapping of events to their respective callbacks.
  */
 export type Events = {
-  login: (token: string) => void;
-  post: (reply: RichPost["reply"], post: RichPost) => void;
-  updatePost: (reply: RichPost["reply"], post: RichPost) => void;
-  deletePost: (id: string) => void;
-};
+  login: (token: string) => void;
+  post: (reply: RichPost["reply"], post: RichPost) => void;
+  updatePost: (reply: RichPost["reply"], post: RichPost) => void;
+  deletePost: (id: string) => void;
+};
 
 /** Options that can be passed into {@link RoarBot}. */
 export type RoarBotOptions = {
   /** The administrators of this bot. They can use admin commands. */
-  admins?: string[];
+  admins?: string[];
   /**
    * Users banned from using the bot. Any commands they try to run won't be executed.
    */
-  banned?: string[];
+  banned?: string[];
   /**
    * Whether to have a generated help command. By default, this is true.
    */
-  help?: boolean;
+  help?: boolean;
   /**
    * Different messages the bot might send. Each of them has a default that
    * will be used if none are provided here.
    */
-  messages?: Partial<Messages>;
+  messages?: Partial<Messages>;
   /** Whether to log messages to the console. */
-  loggingLevel?: LoggingLevel;
-};
+  loggingLevel?: LoggingLevel;
+};
 
 /**
  * How much logging the bot should do. By default, this is `"base"`.
@@ -679,7 +679,7 @@ export type RoarBotOptions = {
  * - `base`: Logging of most things.
  * - `ws`: Same as `base`, but also logs packets from the server.
  */
-export type LoggingLevel = "none" | "base" | "ws";
+export type LoggingLevel = "none" | "base" | "ws";
 
 /**
  * Different messgaes the bot might send. Each of them has a default that will
@@ -687,82 +687,82 @@ export type LoggingLevel = "none" | "base" | "ws";
  */
 export type Messages = {
   /** When a command doesn't exist. */
-  noCommand: (command: string) => string;
+  noCommand: (command: string) => string;
   /** Description of the help command. */
-  helpDescription: string;
+  helpDescription: string;
   /** @deprecated Unused */
-  helpOptional: string;
+  helpOptional: string;
   /** Heading for the commands in the help command. */
-  helpCommands: string;
+  helpCommands: string;
   /** Message for when a user is banned. */
-  banned: string;
+  banned: string;
   /** Message for when someone tries to run an admin-locked command. */
-  adminLocked: string;
+  adminLocked: string;
   /** Message for when something goes wrong. */
-  error: string;
+  error: string;
   /** Message for when an argument is missing. */
-  argsMissing: (name: string) => string;
+  argsMissing: (name: string) => string;
   /** Message for when a string is not in the expected set of strings. */
-  argsNotInSet: (string: string, set: string) => string;
+  argsNotInSet: (string: string, set: string) => string;
   /** Message for when something is not a number. */
-  argNan: (string: string) => string;
+  argNan: (string: string) => string;
   /** Message for when there are too many arguments. */
-  tooManyArgs: string;
-};
+  tooManyArgs: string;
+};
 
 /**
  * Options that can be passed into {@link RoarBot.prototype.command}.
  */
 export type CommandOptions<TPattern extends Pattern> = {
   /** The description of the command. This is shown in the help message. */
-  description?: string;
+  description?: string;
   /** The category the command is in. This is shown in the help message. */
-  category?: string;
+  category?: string;
   /** The argument pattern of the command. */
-  args: TPattern;
+  args: TPattern;
   /** Whether this command is only usable by administrators. */
-  admin?: boolean;
+  admin?: boolean;
   /** The callback to be called when the command gets executed. */
   fn: (
     reply: RichPost["reply"],
     args: ResolvePattern<TPattern>,
     post: RichPost,
-  ) => void | Promise<void>;
-};
+  ) => void | Promise<void>;
+};
 
 /** A command when it has been added to a bot. */
 export type Command = {
   /** The name of the command. */
-  name: string;
+  name: string;
   /** The category of the command. */
-  category: string;
+  category: string;
   /** The description of the command. */
-  description: string | null;
+  description: string | null;
   /** The pattern the arguments use. */
-  pattern: Pattern;
+  pattern: Pattern;
   /** Whether the command is limited to administrators. */
-  admin: boolean;
-};
+  admin: boolean;
+};
 
 /**
  * Options that can be passed into {@link RoarBot.prototype.post}.
  */
 export type PostOptions = {
   /** Post IDs that this post is replying to. */
-  replies?: string[];
+  replies?: string[];
   /**
    * The attachments to upload with a post. These can either be attachment IDs
    * or blobs that are passed to {@link RoarBot.prototype.upload}
    */
-  attachments?: (string | Blob)[];
+  attachments?: (string | Blob)[];
   /**
    * The chat to post to. If this is not specified, the post will be posted to
    * home. The available special chats are:
    * - `home`
    * - `livechat`
    */
-  chat?: string;
-};
+  chat?: string;
+};
 
 /**
  * Options that can be passed into {@link RoarBot.prototype.setAccountSettings}
@@ -770,33 +770,33 @@ export type PostOptions = {
  */
 export type SetAccountSettingsOptions = {
   /** A default profile picture. */
-  pfp?: number;
+  pfp?: number;
   /** An uploaded profile picture. TODO: Make uploading icons possible */
-  avatar?: string;
+  avatar?: string;
   /** The profile color. */
-  avatarColor?: string;
+  avatarColor?: string;
   /** The quote. */
-  quote?: string;
+  quote?: string;
   /** Whether the account has unread messages in their inbox. */
-  unreadInbox?: boolean;
+  unreadInbox?: boolean;
   /** The theme the account uses on Meower Svelte. */
-  theme?: string;
+  theme?: string;
   /** The layout the account uses on Meower Svelte. */
-  layout?: string;
+  layout?: string;
   /** Whether the account has sound effects enabled on Meower Svelte. */
-  sfx?: boolean;
+  sfx?: boolean;
   /** Whether the account has background music enabled on Meower Svelte. */
-  bgm?: boolean;
+  bgm?: boolean;
   /** The song the account uses as background music on Meower Svelte. */
-  bgmSong?: number;
+  bgmSong?: number;
   /** Whether the account has debug mode enabled on Meower Svelte. */
-  debug?: boolean;
+  debug?: boolean;
   /**
    * Whether the account is not recieving posts from blocked users.
    * > [!NOTE]
    * > For this to take effect, the account has to log in again.
    */
-  hideBlockedUsers?: boolean;
+  hideBlockedUsers?: boolean;
   /** The chats the user has favorited. */
-  favoritedChats?: string[];
-};
+  favoritedChats?: string[];
+};
