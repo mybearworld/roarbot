@@ -531,26 +531,33 @@ export class RoarBot {
           }
         }
       };
-      handleError(async () => {
+      let refuse = false;
+      await handleError(async () => {
         if (this._banned.includes(post.username)) {
           this._log(
             "error",
             `Refused running ${commandName} as the user is banned.`,
           );
+          refuse = true;
           await reply(this._messages.banned);
-          return;
         }
       });
-      handleError(async () => {
+      if (refuse) {
+        return;
+      }
+      await handleError(async () => {
         if (options.admin && !this._admins.includes(post.username)) {
           this._log(
             "error",
             `Refused running ${commandName} as the user is not an admin.`,
           );
+          refuse = true;
           await reply(this._messages.adminLocked);
-          return;
         }
       });
+      if (refuse) {
+        return;
+      }
       const parsed = parseArgs(options.args, split.slice(2), this._messages);
       await handleError(async () => {
         if (parsed.error) {
