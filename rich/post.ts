@@ -69,9 +69,17 @@ export class RichPost implements Post {
    * {@link RichBot.prototype.replyTo} instead.
    */
   reply_to!: (RichPost | null)[];
-  private _bot: RoarBot;
+  private _bot!: RoarBot;
+
+  private static _posts = new Map<string, RichPost>();
 
   constructor(post: Post, bot: RoarBot) {
+    const existingPost = RichPost._posts.get(post.post_id);
+    if (existingPost) {
+      existingPost._applyPost(post);
+      return existingPost;
+    }
+    RichPost._posts.set(post.post_id, this);
     this._bot = bot;
     this._applyPost(post);
     this._bot.on("updatePost", (_reply, post) => {
