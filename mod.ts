@@ -808,5 +808,3 @@ export type SetAccountSettingsOptions = {
   favoritedChats?: string[];
 };
 
-const bot = new RoarBot();
-bot.login("abcdef", "SecurePass");
