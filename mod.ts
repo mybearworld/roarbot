@@ -165,7 +165,7 @@ export class RoarBot {
         )
           .map(
             ([name, commands]) =>
-              `### ${name}\n` +
+              (name === "None" ? "" : `### ${name}\n`) +
               (commands ?? [])
                 .map((command) => {
                   const pattern = command.pattern
