@@ -144,7 +144,11 @@ export class RoarBot {
       if (
         split[0].toLowerCase() === `@${this._username}`.toLowerCase() &&
         split[1] &&
-        !this._commands.find((command) => command.name === split[1])
+        !this._commands.find(
+          (command) =>
+            command.name === split[1] ||
+            command.aliases.some((alias) => alias === split[1])
+        )
       ) {
         reply(this._messages.noCommand(JSON.stringify(split[1])));
       }
@@ -181,7 +185,9 @@ export class RoarBot {
                     (command.admin ? "🔒 " : "") +
                     `@${this.username} ${command.name} ${pattern}` +
                     (command.description ? `\n_${command.description}_` : "") +
-                    "\n"
+                    (command.aliases.length !== 0
+                      ? `\n_Aliases: ${command.aliases.join(", ")}_\n`
+                      : "\n")
                   );
                 })
                 .join("\n")
@@ -500,6 +506,7 @@ export class RoarBot {
     }
     this._commands.push({
       name: name,
+      aliases: options.aliases ?? [],
       description: options.description ?? null,
       category: options.category ?? "None",
       pattern: options.args,
@@ -513,7 +520,11 @@ export class RoarBot {
       const split = post.content.split(" ");
       if (
         split[0].toLowerCase() !== `@${this.username}`.toLowerCase() ||
-        split[1] !== name
+        (split[1] !== name &&
+          !(
+            options.aliases &&
+            options.aliases.some((alias) => alias === split[1])
+          ))
       ) {
         return;
       }
@@ -731,6 +742,8 @@ export type Messages = {
  * Options that can be passed into {@link RoarBot.prototype.command}.
  */
 export type CommandOptions<TPattern extends Pattern> = {
+  /** Alternate names of the command. */
+  aliases?: string[];
   /** The description of the command. This is shown in the help message. */
   description?: string;
   /** The category the command is in. This is shown in the help message. */
@@ -751,6 +764,8 @@ export type CommandOptions<TPattern extends Pattern> = {
 export type Command = {
   /** The name of the command. */
   name: string;
+  /** Alternate names of the command. */
+  aliases: string[];
   /** The category of the command. */
   category: string;
   /** The description of the command. */
