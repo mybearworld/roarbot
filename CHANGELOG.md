@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Aliases overriding existing commands.
+- Commands with whitespace silently breaking (instead of erroring).
 
 ## 1.7.0 - 2024-11-01
 

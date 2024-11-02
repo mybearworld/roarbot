@@ -499,17 +499,19 @@ export class RoarBot {
     name: string,
     options: CommandOptions<TPattern>
   ) {
-    if (this._commands.some((command) => command.name === name)) {
-      throw new Error(
-        `A command with the name of ${JSON.stringify(name)} already exists.`
-      );
-    }
-    options.aliases?.forEach((alias) => {
-      if (this._commands.some((command) => command.name === alias)) {
+    const validateName = (name: string) => {
+      if (/\s/.test(name)) {
+        throw new Error("A command name cannot include whitespace.");
+      }
+      if (this._commands.some((command) => command.name === name)) {
         throw new Error(
-          `A command with the name of ${JSON.stringify(alias)} already exists.`
+          `A command with the name of ${JSON.stringify(name)} already exists.`
         );
       }
+    };
+    validateName(name);
+    options.aliases?.forEach((alias) => {
+      validateName(alias);
     });
     this._commands.push({
       name: name,
