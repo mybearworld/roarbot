@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Memory leak causing post edits to create unnecessary objects exponentially.
 
-### 1.6.1 - 2024-08-20
+## 1.6.1 - 2024-08-20
 
 ### Fixed
 
