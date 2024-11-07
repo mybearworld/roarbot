@@ -435,7 +435,7 @@ export class RoarBot {
    * @throws If the API returns an error.
    */
   async upload(file: Blob): Promise<UploadsAttachment> {
-    if (!this._token) {
+    if (!this._username || !this._token) {
       throw new Error("The bot is not logged in.");
     }
     if (file.size > ATTACMHENT_MAX_SIZE) {
@@ -454,7 +454,14 @@ export class RoarBot {
         })
       ).json()
     );
-    return response;
+    return {
+      ...response,
+      bucket: "attachments",
+      claimed: false,
+      hash: "",
+      uploaded_at: Math.floor(Date.now() / 1000),
+      uploaded_by: this._username,
+    };
   }
 
   /**

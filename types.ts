@@ -84,30 +84,45 @@ export const UPDATE_POST_PACKET_SCHEMA = z.object({
 export const DELETE_POST_PACKET_SCHEMA = z.object({
   cmd: z.literal("delete_post"),
   val: z.object({
-    post_id: z.string()
+    post_id: z.string(),
   }),
 });
 
 /** An attachment as returned from the uploading API. */
 export type UploadsAttachment = {
+  /**
+   * @deprecated This only exists for backwards compatibility. Meower has
+   * removed this key.
+   */
   bucket: string;
+  /**
+   * @deprecated This only exists for backwards compatibility. Meower has
+   * removed this key.
+   */
   claimed: boolean;
   filename: string;
+  /**
+   * @deprecated This only exists for backwards compatibility. Meower has
+   * removed this key.
+   */
   hash: string;
   id: string;
+  /**
+   * @deprecated This only exists for backwards compatibility. Meower has
+   * removed this key.
+   */
   uploaded_at: number;
+  /**
+   * @deprecated This only exists for backwards compatibility. Meower has
+   * removed this key.
+   */
   uploaded_by: string;
 };
-export const UPLOADS_ATTACHMENT_SCHEMA: z.ZodType<UploadsAttachment> = z.object(
+export const UPLOADS_ATTACHMENT_SCHEMA  = z.object(
   {
-    bucket: z.string(),
-    claimed: z.boolean(),
     filename: z.string(),
-    hash: z.string(),
     id: z.string(),
-    uploaded_at: z.number(),
-    uploaded_by: z.string(),
-  },
+  }
 );
 
 /** A user from the API. */
@@ -143,5 +158,5 @@ export const USER_SCHEMA: z.ZodType<User> = z.object({
 });
 
 export const API_USER_SCHEMA = USER_SCHEMA.and(
-  z.object({ error: z.literal(false) }),
+  z.object({ error: z.literal(false) })
 ).or(z.object({ error: z.literal(true), type: z.string() }));
