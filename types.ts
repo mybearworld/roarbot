@@ -22,13 +22,21 @@ export type Attachment = {
   size: number;
   width: number;
 };
-export const ATTACHMENT_SCHEMA: z.ZodType<Attachment> = z.object({
+type RealAttachment = Omit<Attachment, "height" | "width"> & {
+  height?: number;
+  width?: number;
+};
+export const ATTACHMENT_SCHEMA: z.ZodType<
+  Attachment,
+  z.ZodTypeDef,
+  RealAttachment
+> = z.object({
   filename: z.string(),
-  height: z.number(),
+  height: z.number().default(0),
   id: z.string(),
   mime: z.string(),
   size: z.number(),
-  width: z.number(),
+  width: z.number().default(0),
 });
 
 /** A post returned from the Meower API. */
@@ -44,6 +52,10 @@ export type Post = {
   u: string;
   reactions: { count: number; emoji: string; user_reacted: boolean }[];
   reply_to: (Post | null)[];
+};
+type RealPost = Omit<Post, "attachments" | "reply_to"> & {
+  attachments: RealAttachment[];
+  reply_to: (RealPost | null)[];
 };
 export const BASE_POST_SCHEMA = z.object({
   attachments: ATTACHMENT_SCHEMA.array(),
@@ -63,9 +75,10 @@ export const BASE_POST_SCHEMA = z.object({
     })
     .array(),
 });
-const POST_SCHEMA: z.ZodType<Post> = BASE_POST_SCHEMA.extend({
-  reply_to: z.lazy(() => POST_SCHEMA.nullable().array()),
-});
+const POST_SCHEMA: z.ZodType<Post, z.ZodTypeDef, RealPost> =
+  BASE_POST_SCHEMA.extend({
+    reply_to: z.lazy(() => POST_SCHEMA.nullable().array()),
+  });
 
 export const API_POST_SCHEMA = z
   .object({ error: z.literal(false) })
