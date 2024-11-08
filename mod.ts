@@ -86,7 +86,7 @@ export * from "./patterns.ts";
 export * from "./rich/post.ts";
 
 const ATTACMHENT_MAX_SIZE = 25 << 20;
-const version = "1.7.27.17.1";
+const version = "1.7.3";
 const logTimeFormat = new Intl.DateTimeFormat("en-US", {
   timeStyle: "medium",
   hour12: false,
