@@ -132,7 +132,7 @@ export class RoarBot {
       argsMissing: (name) => `Missing ${name}.`,
       argsNotInSet: (string, set) => `${string} has to be one of ${set}.`,
       argNan: (string) => `${string} is not a number.`,
-      tooManyArgs: "You have too many arguments.",
+      tooManyArgs: "You have too many arguments/replies.",
       ...options?.messages,
     };
     this._checkForUpdates();
@@ -596,7 +596,12 @@ export class RoarBot {
       if (refuse) {
         return;
       }
-      const parsed = parseArgs(options.args, split.slice(2), this._messages);
+      const parsed = parseArgs(
+        options.args,
+        split.slice(2),
+        this._messages,
+        post.replyTo,
+      );
       await handleError(async () => {
         if (parsed.error) {
           this._log(

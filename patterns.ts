@@ -1,13 +1,14 @@
-import type { Messages } from "./mod.ts";
+import type { Messages, RichPost } from "./mod.ts";
 
 /**
  * Possible types of patterns to a command.
  * - `"string"`: Any string
  * - `"number"`: Any floating point number
  * - `"full"`: A string that matches until the end of the command.
+ * - `"reply"`: A post the command replied to.
  * - `string[]`: One of the specified strings
  */
-export type PatternType = "string" | "number" | "full" | string[];
+export type PatternType = "string" | "number" | "full" | "reply" | string[];
 
 /**
  * A list of arguments types. This is a list of objects formatted like this:
@@ -63,6 +64,7 @@ type ResolvePatternType<TArgument extends PatternType> =
   TArgument extends "string" ? string
   : TArgument extends "number" ? number
   : TArgument extends "full" ? string
+  : TArgument extends "reply" ? RichPost
   : TArgument extends string[] ? TArgument[number]
   : never;
 
@@ -70,13 +72,16 @@ export const parseArgs = <const TPattern extends Pattern>(
   pattern: TPattern,
   args: string[],
   messages: Messages,
+  replies?: (RichPost | null)[],
 ):
   | { error: true; message: string }
   | { error: false; parsed: ResolvePattern<TPattern> } => {
   const parsed = [];
   let hadOptionals = false;
   let hadFull = false;
-  for (const [i, slice] of pattern.entries()) {
+  let i = 0;
+  let replyAmount = 0;
+  for (const slice of pattern) {
     const isObject = typeof slice === "object" && "type" in slice;
     const type = isObject ? slice.type : slice;
     const optional = isObject && !!slice.optional;
@@ -90,6 +95,21 @@ export const parseArgs = <const TPattern extends Pattern>(
     hadOptionals ||= optional;
     const name = isObject && !!slice.name;
     const repr = name ? `${slice.name} (${type})` : `${type}`;
+    if (type === "reply") {
+      if (!replies?.[replyAmount]) {
+        if (optional) {
+          parsed.push(undefined);
+          continue;
+        }
+        return {
+          error: true,
+          message: messages.argsMissing(repr),
+        };
+      }
+      parsed.push(replies[replyAmount]);
+      replyAmount++;
+      break;
+    }
     const current = args[i];
     if (!current) {
       if (optional) {
@@ -114,6 +134,7 @@ export const parseArgs = <const TPattern extends Pattern>(
     switch (type) {
       case "string": {
         parsed.push(current);
+        i++;
         break;
       }
       case "number": {
@@ -125,6 +146,7 @@ export const parseArgs = <const TPattern extends Pattern>(
           };
         }
         parsed.push(number);
+        i++;
         break;
       }
       case "full": {
@@ -137,13 +159,14 @@ export const parseArgs = <const TPattern extends Pattern>(
         }
         hadFull = true;
         parsed.push(args.slice(i).join(" "));
+        i++;
         break;
       }
       default:
         (type) satisfies never;
     }
   }
-  if (!hadFull && args.length !== parsed.length) {
+  if (!hadFull && args.length + replyAmount !== parsed.length) {
     return { error: true, message: messages.tooManyArgs };
   }
   return { error: false, parsed: parsed as ResolvePattern<TPattern> };
