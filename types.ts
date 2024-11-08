@@ -118,12 +118,10 @@ export type UploadsAttachment = {
    */
   uploaded_by: string;
 };
-export const UPLOADS_ATTACHMENT_SCHEMA  = z.object(
-  {
-    filename: z.string(),
-    id: z.string(),
-  }
-);
+export const UPLOADS_ATTACHMENT_SCHEMA = z.object({
+  filename: z.string(),
+  id: z.string(),
+});
 
 /** A user from the API. */
 export type User = {
@@ -158,5 +156,5 @@ export const USER_SCHEMA: z.ZodType<User> = z.object({
 });
 
 export const API_USER_SCHEMA = USER_SCHEMA.and(
-  z.object({ error: z.literal(false) })
+  z.object({ error: z.literal(false) }),
 ).or(z.object({ error: z.literal(true), type: z.string() }));

@@ -136,9 +136,12 @@ export class RoarBot {
       ...options?.messages,
     };
     this._checkForUpdates();
-    setInterval(() => {
-      this._checkForUpdates();
-    }, 1000 * 60 * 60);
+    setInterval(
+      () => {
+        this._checkForUpdates();
+      },
+      1000 * 60 * 60,
+    );
     this.on("post", (reply, post) => {
       const split = post.p.split(" ");
       if (
@@ -147,7 +150,7 @@ export class RoarBot {
         !this._commands.find(
           (command) =>
             command.name === split[1] ||
-            command.aliases.some((alias) => alias === split[1])
+            command.aliases.some((alias) => alias === split[1]),
         )
       ) {
         reply(this._messages.noCommand(JSON.stringify(split[1])));
@@ -161,7 +164,7 @@ export class RoarBot {
       args: [],
       fn: async (reply) => {
         const commands = Object.entries(
-          Object.groupBy(this._commands, (command) => command.category)
+          Object.groupBy(this._commands, (command) => command.category),
         )
           .map(
             ([name, commands]) =>
@@ -170,27 +173,29 @@ export class RoarBot {
                 .map((command) => {
                   const pattern = command.pattern
                     .map((patternType) =>
-                      typeof patternType === "object" &&
-                      !Array.isArray(patternType)
-                        ? (patternType.optional ? "[" : "<") +
-                          (("name" in patternType
-                            ? `${patternType.name}: `
-                            : "") +
-                            stringifyPatternType(patternType.type)) +
-                          (patternType.optional ? "]" : ">")
-                        : `(${stringifyPatternType(patternType)})`
+                      (
+                        typeof patternType === "object" &&
+                        !Array.isArray(patternType)
+                      ) ?
+                        (patternType.optional ? "[" : "<") +
+                        (("name" in patternType ?
+                          `${patternType.name}: `
+                        : "") +
+                          stringifyPatternType(patternType.type)) +
+                        (patternType.optional ? "]" : ">")
+                      : `(${stringifyPatternType(patternType)})`,
                     )
                     .join(" ");
                   return (
                     (command.admin ? "🔒 " : "") +
                     `@${this.username} ${command.name} ${pattern}` +
                     (command.description ? `\n_${command.description}_` : "") +
-                    (command.aliases.length !== 0
-                      ? `\n_Aliases: ${command.aliases.join(", ")}_\n`
-                      : "\n")
+                    (command.aliases.length !== 0 ?
+                      `\n_Aliases: ${command.aliases.join(", ")}_\n`
+                    : "\n")
                   );
                 })
-                .join("\n")
+                .join("\n"),
           )
           .join("\n");
         await reply(`${this._messages.helpCommands}\n${commands}`);
@@ -210,13 +215,11 @@ export class RoarBot {
     ) {
       console.log(
         `\x1b[1;90m[${logTimeFormat.format(Date.now())}]\x1b[1;0m`,
-        (level === "info" || level === "ws"
-          ? "\x1b[1;90m"
-          : level === "error"
-          ? "\x1b[1;31m"
-          : "\x1b[1;36m") + msg,
+        (level === "info" || level === "ws" ? "\x1b[1;90m"
+        : level === "error" ? "\x1b[1;31m"
+        : "\x1b[1;36m") + msg,
         ...other,
-        "\x1b[0m"
+        "\x1b[0m",
       );
     }
   }
@@ -228,18 +231,18 @@ export class RoarBot {
     this._log("info", "Checking for RoarBot updates...");
     try {
       const response = JSR_UPDATE.parse(
-        await (await fetch("https://jsr.io/@mbw/roarbot/meta.json")).json()
+        await (await fetch("https://jsr.io/@mbw/roarbot/meta.json")).json(),
       );
       if (version !== response.latest) {
         console.log(
-          `A new RoarBot version is available! ${version} → ${response.latest}\nSee the changelog for the changes: https://github.com/mybearworld/roarbot/blob/main/CHANGELOG.md`
+          `A new RoarBot version is available! ${version} → ${response.latest}\nSee the changelog for the changes: https://github.com/mybearworld/roarbot/blob/main/CHANGELOG.md`,
         );
       }
       this._foundUpdate = true;
     } catch {
       this._log(
         "error",
-        "Failed to check for RoarBot updates. Ensure that you're on a recent version!"
+        "Failed to check for RoarBot updates. Ensure that you're on a recent version!",
       );
     }
   }
@@ -271,11 +274,11 @@ export class RoarBot {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
         })
-      ).json()
+      ).json(),
     );
     if (response.error) {
       throw new Error(
-        `Couldn't log in: ${response.type}. Ensure that you have the correct password!`
+        `Couldn't log in: ${response.type}. Ensure that you have the correct password!`,
       );
     }
     this._log("success", "Recieved initial token.");
@@ -285,7 +288,7 @@ export class RoarBot {
 
   private _connectWebSocket(username: string, initialToken: string) {
     const ws = new WebSocket(
-      `https://server.meower.org?v=1&token=${initialToken}`
+      `https://server.meower.org?v=1&token=${initialToken}`,
     );
     this._ws = ws;
     ws.addEventListener("message", ({ data }) => {
@@ -328,7 +331,7 @@ export class RoarBot {
         return;
       }
       this._events.deletePost.forEach((callback) =>
-        callback(parsed.data.val.post_id)
+        callback(parsed.data.val.post_id),
       );
     });
     ws.addEventListener("close", () => {
@@ -373,9 +376,9 @@ export class RoarBot {
       await (
         await fetch(
           `https://api.meower.org/${
-            !options?.chat || options?.chat === "home"
-              ? "home"
-              : `posts/${options?.chat}`
+            !options?.chat || options?.chat === "home" ?
+              "home"
+            : `posts/${options?.chat}`
           }`,
           {
             method: "POST",
@@ -388,17 +391,15 @@ export class RoarBot {
               reply_to: options?.replies,
               attachments: await Promise.all(
                 (options?.attachments ?? []).map((attachment) =>
-                  typeof attachment === "string"
-                    ? attachment
-                    : this.upload(attachment).then(
-                        (attachment) => attachment.id
-                      )
-                )
+                  typeof attachment === "string" ? attachment : (
+                    this.upload(attachment).then((attachment) => attachment.id)
+                  ),
+                ),
               ),
             }),
-          }
+          },
         )
-      ).json()
+      ).json(),
     );
     if (response.error) {
       throw new Error(`Couldn't post: ${response.type}`);
@@ -416,9 +417,9 @@ export class RoarBot {
     const response = API_USER_SCHEMA.parse(
       await (
         await fetch(
-          `https://api.meower.org/users/${encodeURIComponent(username)}`
+          `https://api.meower.org/users/${encodeURIComponent(username)}`,
         )
-      ).json()
+      ).json(),
     );
     if (response.error) {
       throw new Error(`Couldn't get user. Error: ${response.type}`);
@@ -440,7 +441,7 @@ export class RoarBot {
     }
     if (file.size > ATTACMHENT_MAX_SIZE) {
       throw new Error(
-        `The file is too large. Keep it at or under ${ATTACMHENT_MAX_SIZE}B`
+        `The file is too large. Keep it at or under ${ATTACMHENT_MAX_SIZE}B`,
       );
     }
     const form = new FormData();
@@ -452,7 +453,7 @@ export class RoarBot {
           body: form,
           headers: { Authorization: this._token },
         })
-      ).json()
+      ).json(),
     );
     return {
       ...response,
@@ -492,7 +493,7 @@ export class RoarBot {
       return;
     }
     throw new Error(
-      `Failed to set account settings. The server responded with ${response.status}`
+      `Failed to set account settings. The server responded with ${response.status}`,
     );
   }
 
@@ -504,7 +505,7 @@ export class RoarBot {
    */
   command<const TPattern extends Pattern>(
     name: string,
-    options: CommandOptions<TPattern>
+    options: CommandOptions<TPattern>,
   ) {
     const validateName = (name: string) => {
       if (/\s/.test(name)) {
@@ -512,7 +513,7 @@ export class RoarBot {
       }
       if (this._commands.some((command) => command.name === name)) {
         throw new Error(
-          `A command with the name of ${JSON.stringify(name)} already exists.`
+          `A command with the name of ${JSON.stringify(name)} already exists.`,
         );
       }
     };
@@ -555,7 +556,7 @@ export class RoarBot {
           this._log(
             "error",
             `Couldn't run ${commandName} because an error occured.`,
-            e
+            e,
           );
           try {
             await reply(this._messages.error);
@@ -563,7 +564,7 @@ export class RoarBot {
             this._log(
               "error",
               "Another error occured trying to send the error.",
-              f
+              f,
             );
           }
         }
@@ -573,7 +574,7 @@ export class RoarBot {
         if (this._banned.includes(post.username)) {
           this._log(
             "error",
-            `Refused running ${commandName} as the user is banned.`
+            `Refused running ${commandName} as the user is banned.`,
           );
           refuse = true;
           await reply(this._messages.banned);
@@ -586,7 +587,7 @@ export class RoarBot {
         if (options.admin && !this._admins.includes(post.username)) {
           this._log(
             "error",
-            `Refused running ${commandName} as the user is not an admin.`
+            `Refused running ${commandName} as the user is not an admin.`,
           );
           refuse = true;
           await reply(this._messages.adminLocked);
@@ -600,7 +601,7 @@ export class RoarBot {
         if (parsed.error) {
           this._log(
             "error",
-            `Couldn't run ${commandName} because ${parsed.message}`
+            `Couldn't run ${commandName} because ${parsed.message}`,
           );
           await reply(parsed.message);
         } else {
@@ -772,7 +773,7 @@ export type CommandOptions<TPattern extends Pattern> = {
   fn: (
     reply: RichPost["reply"],
     args: ResolvePattern<TPattern>,
-    post: RichPost
+    post: RichPost,
   ) => void | Promise<void>;
 };
 
