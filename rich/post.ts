@@ -168,6 +168,25 @@ export class RichPost implements Post {
     this._events[event].push(callback);
   }
 
+  async edit(newContent: string) {
+    if (!this._bot.token) {
+      throw new Error("The bot is not logged in.");
+    }
+    if (this._bot.username?.toLowerCase() !== this.username.toLowerCase()) {
+      throw new Error("This post is not made by the bot.");
+    }
+    const response = await fetch(`https://api.meower.org/posts?id=${this.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ content: newContent }),
+      headers: { Token: this._bot.token, "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Couldn't edit post. The API returned ${response.status}`,
+      );
+    }
+  }
+
   /**
    * Deletes this post.
    * @throws If the bot isn't logged in.
