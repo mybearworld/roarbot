@@ -59,13 +59,13 @@ type RealPost = Omit<Post, "attachments" | "reply_to"> & {
 };
 export const BASE_POST_SCHEMA = z.object({
   attachments: ATTACHMENT_SCHEMA.array(),
-  edited_at: z.number().optional(),
+  edited_at: z.number().nullable().optional(),
   isDeleted: z.literal(false),
   p: z.string(),
   post_id: z.string(),
   post_origin: z.string(),
   t: z.object({ e: z.number() }),
-  type: z.number(),
+  type: z.number().optional(),
   u: z.string(),
   reactions: z
     .object({
