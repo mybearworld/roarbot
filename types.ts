@@ -42,13 +42,13 @@ export const ATTACHMENT_SCHEMA: z.ZodType<
 /** A post returned from the Meower API. */
 export type Post = {
   attachments: Attachment[];
-  edited_at?: number;
+  edited_at?: number | null;
   isDeleted: boolean;
   p: string;
   post_id: string;
   post_origin: string;
   t: { e: number };
-  type: number;
+  type?: number;
   u: string;
   reactions: { count: number; emoji: string; user_reacted: boolean }[];
   reply_to: (Post | null)[];
@@ -59,13 +59,13 @@ type RealPost = Omit<Post, "attachments" | "reply_to"> & {
 };
 export const BASE_POST_SCHEMA = z.object({
   attachments: ATTACHMENT_SCHEMA.array(),
-  edited_at: z.number().optional(),
+  edited_at: z.number().nullable().optional(),
   isDeleted: z.literal(false),
   p: z.string(),
   post_id: z.string(),
   post_origin: z.string(),
   t: z.object({ e: z.number() }),
-  type: z.number(),
+  type: z.number().optional(),
   u: z.string(),
   reactions: z
     .object({

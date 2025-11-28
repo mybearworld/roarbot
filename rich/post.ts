@@ -98,13 +98,13 @@ export class RichPost implements Post {
 
   private _applyPost(post: Post) {
     this.attachments = post.attachments;
-    this.edited_at = post.edited_at;
+    this.edited_at = post.edited_at ?? 0;
     this.isDeleted = post.isDeleted;
     this.p = post.p;
     this.post_id = post.post_id;
     this.post_origin = post.post_origin;
     this.t = post.t;
-    this.type = post.type;
+    this.type = post.type ?? 1;
     this.u = post.u;
     this.reactions = post.reactions.map((reaction) => ({
       ...reaction,
